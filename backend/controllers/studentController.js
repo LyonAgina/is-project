@@ -1,4 +1,5 @@
 const pool = require('../db');
+const upload = require('../middleware/upload');
 
 const getProfile = async (req, res) => {
   try {
@@ -20,16 +21,16 @@ const getProfile = async (req, res) => {
 };
 
 const updateProfile = async (req, res) => {
-  const { fullName, institution, courseOfStudy, educationLevel, experienceYears, location, bio, cvUrl, tagIds } = req.body;
+  const { fullName, institution, courseOfStudy, educationLevel, academicGrade, experienceYears, location, bio, cvUrl, tagIds } = req.body;
   const connection = await pool.getConnection();
   try {
     await connection.beginTransaction();
 
     await connection.query(
-      `UPDATE student_profiles
-       SET full_name = ?, institution = ?, course_of_study = ?, education_level = ?, experience_years = ?, location = ?, bio = ?, cv_url = ?
-       WHERE user_id = ?`,
-      [fullName, institution, courseOfStudy, educationLevel, experienceYears || 0, location, bio, cvUrl, req.user.id]
+  `   UPDATE student_profiles
+      SET full_name = ?, institution = ?, course_of_study = ?, education_level = ?, academic_grade = ?, experience_years = ?, location = ?, bio = ?, cv_url = ?
+      WHERE user_id = ?`,
+    [fullName, institution, courseOfStudy, educationLevel, academicGrade || null, experienceYears || 0, location, bio, cvUrl, req.user.id]
     );
 
     const [[profile]] = await connection.query('SELECT id FROM student_profiles WHERE user_id = ?', [req.user.id]);
@@ -132,7 +133,19 @@ const markNotificationRead = async (req, res) => {
   }
 };
 
+const uploadCv = async (req, res) => {
+  if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
+  const cvUrl = `/uploads/${req.file.filename}`;
+  try {
+    await pool.query('UPDATE student_profiles SET cv_url = ? WHERE user_id = ?', [cvUrl, req.user.id]);
+    res.json({ message: 'CV uploaded', cvUrl });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to save CV' });
+  }
+};
+
 module.exports = {
   getProfile, updateProfile, browseOpportunities, applyToOpportunity,
-  getMyApplications, getNotifications, markNotificationRead,
+  getMyApplications, getNotifications, markNotificationRead, uploadCv
 };

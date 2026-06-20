@@ -1,21 +1,35 @@
 // @ts-nocheck
 'use client';
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { apiFetch } from '@/lib/api';
 
-export default function StudentDashboard() {
-  const router = useRouter();
-  const [ready, setReady] = useState(false);
+export default function StudentHome() {
+  const [profile, setProfile] = useState(null);
+  const [appCount, setAppCount] = useState(0);
+  const [unread, setUnread] = useState(0);
 
   useEffect(() => {
-    const role = localStorage.getItem('role');
-    if (role !== 'student') {
-      router.push('/login');
-    } else {
-      setReady(true);
-    }
+    apiFetch('/api/student/profile').then((r) => r.json()).then(setProfile).catch(() => {});
+    apiFetch('/api/student/applications').then((r) => r.json()).then((d) => setAppCount(d.length)).catch(() => {});
+    apiFetch('/api/student/notifications').then((r) => r.json()).then((d) => setUnread(d.filter((n) => !n.is_read).length)).catch(() => {});
   }, []);
 
-  if (!ready) return null;
-  return <main className="p-8"><h1 className="text-2xl font-bold">Student Dashboard</h1></main>;
+  return (
+    <div>
+      <h1 className="font-display text-2xl font-bold mb-2">
+        Welcome{profile?.full_name ? `, ${profile.full_name}` : ''}
+      </h1>
+      <p className="text-[var(--color-muted)] mb-8">Here's where things stand right now.</p>
+      <div className="grid grid-cols-2 gap-4 max-w-md">
+        <div className="border border-[var(--color-line)] rounded-xl p-5">
+          <p className="text-xs uppercase tracking-wide text-[var(--color-muted)] mb-2">Applications</p>
+          <p className="font-mono text-3xl font-semibold">{appCount}</p>
+        </div>
+        <div className="border border-[var(--color-line)] rounded-xl p-5">
+          <p className="text-xs uppercase tracking-wide text-[var(--color-muted)] mb-2">Unread</p>
+          <p className="font-mono text-3xl font-semibold">{unread}</p>
+        </div>
+      </div>
+    </div>
+  );
 }

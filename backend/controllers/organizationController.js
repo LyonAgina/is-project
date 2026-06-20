@@ -29,7 +29,7 @@ const updateProfile = async (req, res) => {
 };
 
 const createOpportunity = async (req, res) => {
-  const { title, category, description, minEducation, minExperience, location, deadline, tagIds } = req.body;
+  const { title, category, description, minEducation, minAcademicGrade, minExperience, location, deadline, tagIds } = req.body;
   const connection = await pool.getConnection();
   try {
     const [[org]] = await connection.query('SELECT id, verification_status FROM organizations WHERE user_id = ?', [req.user.id]);
@@ -40,10 +40,10 @@ const createOpportunity = async (req, res) => {
 
     await connection.beginTransaction();
     const [result] = await connection.query(
-      `INSERT INTO opportunities (organization_id, title, category, description, min_education, min_experience, location, deadline, status)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'active')`,
-      [org.id, title, category, description, minEducation || null, minExperience || 0, location, deadline || null]
-    );
+      `INSERT INTO opportunities (organization_id, title, category, description, min_education, min_academic_grade, min_experience, location, deadline, status)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'active')`,
+      [org.id, title, category, description, minEducation || null, minAcademicGrade || null, minExperience || 0, location, deadline || null]
+        );
 
     if (Array.isArray(tagIds)) {
       for (const tagId of tagIds) {

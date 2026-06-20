@@ -6,6 +6,7 @@ const adminRoutes = require('./routes/adminRoutes');
 const tagRoutes = require('./routes/tagRoutes');
 const studentRoutes = require('./routes/studentRoutes');
 const organizationRoutes = require('./routes/organizationRoutes');
+const path = require('path');
 require('dotenv').config();
 
 const app = express();
@@ -16,6 +17,7 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/tags', tagRoutes);
 app.use('/api/student', studentRoutes);
 app.use('/api/organization', organizationRoutes);
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 
 app.get('/api/health', async (req, res) => {
