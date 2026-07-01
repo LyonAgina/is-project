@@ -10,6 +10,7 @@ const links = [
   { href: '/dashboard/organization/create', label: 'Create opportunity' },
   { href: '/dashboard/organization/opportunities', label: 'My opportunities' },
   { href: '/dashboard/organization/profile', label: 'Profile' },
+  { href: '/dashboard/organization/reports', label: 'Reports' },
 ];
 
 export default function OrganizationLayout({ children }) {

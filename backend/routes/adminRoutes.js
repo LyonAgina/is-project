@@ -9,11 +9,13 @@ const {
   getAllOpportunities,
   deleteOpportunity,
   deleteExpiredOpportunities,
+  getReports,
 } = require('../controllers/adminController');
 
 router.use(verifyToken, requireRole('admin'));
 
 router.get('/stats', getStats);
+router.get('/reports', getReports);
 router.get('/organizations/pending', getPendingOrganizations);
 router.put('/organizations/:id/verify', verifyOrganization);
 router.get('/users', getAllUsers);

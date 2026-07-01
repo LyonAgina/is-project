@@ -44,6 +44,8 @@ CREATE TABLE student_profiles (
   location         VARCHAR(150),
   bio              TEXT,
   cv_url           VARCHAR(255),
+  cv_filename       VARCHAR(255),
+  profile_picture_url VARCHAR(255),
   updated_at       TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
                      ON UPDATE CURRENT_TIMESTAMP,
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
@@ -128,6 +130,7 @@ CREATE TABLE applications (
   student_id     INT NOT NULL,
   opportunity_id INT NOT NULL,
   status         ENUM('submitted','under_review','accepted','rejected') NOT NULL DEFAULT 'submitted',
+  cover_note     TEXT NULL,
   applied_at     TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   UNIQUE KEY uniq_student_opportunity (student_id, opportunity_id),
   FOREIGN KEY (student_id)     REFERENCES student_profiles(id) ON DELETE CASCADE,

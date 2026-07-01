@@ -9,7 +9,7 @@ export default function CreateOpportunity() {
   const router = useRouter();
   const [form, setForm] = useState({
     title: '', category: 'job', description: '', minEducation: 'undergraduate',
-    minExperience: 0, location: '', deadline: '',
+    minAcademicGrade: '', minExperience: 0, location: '', deadline: '',
   });
   const [tagIds, setTagIds] = useState([]);
   const [error, setError] = useState('');

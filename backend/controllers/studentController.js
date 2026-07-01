@@ -21,24 +21,39 @@ const getProfile = async (req, res) => {
 };
 
 const updateProfile = async (req, res) => {
-  const { fullName, institution, courseOfStudy, educationLevel, academicGrade, experienceYears, location, bio, cvUrl, tagIds } = req.body;
   const connection = await pool.getConnection();
   try {
+    const [[current]] = await connection.query('SELECT * FROM student_profiles WHERE user_id = ?', [req.user.id]);
+    if (!current) {
+      connection.release();
+      return res.status(404).json({ error: 'Profile not found' });
+    }
+
+    const merged = {
+      fullName: req.body.fullName !== undefined ? req.body.fullName : current.full_name,
+      institution: req.body.institution !== undefined ? req.body.institution : current.institution,
+      courseOfStudy: req.body.courseOfStudy !== undefined ? req.body.courseOfStudy : current.course_of_study,
+      educationLevel: req.body.educationLevel !== undefined ? req.body.educationLevel : current.education_level,
+      academicGrade: req.body.academicGrade !== undefined ? req.body.academicGrade : current.academic_grade,
+      experienceYears: req.body.experienceYears !== undefined ? req.body.experienceYears : current.experience_years,
+      location: req.body.location !== undefined ? req.body.location : current.location,
+      bio: req.body.bio !== undefined ? req.body.bio : current.bio,
+      cvUrl: req.body.cvUrl !== undefined ? req.body.cvUrl : current.cv_url,
+    };
+
     await connection.beginTransaction();
 
     await connection.query(
-  `   UPDATE student_profiles
-      SET full_name = ?, institution = ?, course_of_study = ?, education_level = ?, academic_grade = ?, experience_years = ?, location = ?, bio = ?, cv_url = ?
-      WHERE user_id = ?`,
-    [fullName, institution, courseOfStudy, educationLevel, academicGrade || null, experienceYears || 0, location, bio, cvUrl, req.user.id]
+      `UPDATE student_profiles
+       SET full_name = ?, institution = ?, course_of_study = ?, education_level = ?, academic_grade = ?, experience_years = ?, location = ?, bio = ?, cv_url = ?
+       WHERE user_id = ?`,
+      [merged.fullName, merged.institution, merged.courseOfStudy, merged.educationLevel, merged.academicGrade || null, merged.experienceYears || 0, merged.location, merged.bio, merged.cvUrl, req.user.id]
     );
 
-    const [[profile]] = await connection.query('SELECT id FROM student_profiles WHERE user_id = ?', [req.user.id]);
-
-    if (Array.isArray(tagIds)) {
-      await connection.query('DELETE FROM student_tags WHERE student_id = ?', [profile.id]);
-      for (const tagId of tagIds) {
-        await connection.query('INSERT INTO student_tags (student_id, tag_id) VALUES (?, ?)', [profile.id, tagId]);
+    if (Array.isArray(req.body.tagIds)) {
+      await connection.query('DELETE FROM student_tags WHERE student_id = ?', [current.id]);
+      for (const tagId of req.body.tagIds) {
+        await connection.query('INSERT INTO student_tags (student_id, tag_id) VALUES (?, ?)', [current.id, tagId]);
       }
     }
 
@@ -70,10 +85,16 @@ const browseOpportunities = async (req, res) => {
 };
 
 const applyToOpportunity = async (req, res) => {
-  const { opportunityId } = req.body;
+  const { opportunityId, coverNote } = req.body;
   try {
-    const [[profile]] = await pool.query('SELECT id FROM student_profiles WHERE user_id = ?', [req.user.id]);
-    await pool.query('INSERT INTO applications (student_id, opportunity_id) VALUES (?, ?)', [profile.id, opportunityId]);
+    const [[profile]] = await pool.query('SELECT id, cv_url FROM student_profiles WHERE user_id = ?', [req.user.id]);
+    if (!profile.cv_url) {
+      return res.status(400).json({ error: 'Please upload your CV before applying', code: 'CV_REQUIRED' });
+    }
+    await pool.query(
+      'INSERT INTO applications (student_id, opportunity_id, cover_note) VALUES (?, ?, ?)',
+      [profile.id, opportunityId, coverNote || null]
+    );
     res.status(201).json({ message: 'Application submitted' });
   } catch (err) {
     if (err.code === 'ER_DUP_ENTRY') {
@@ -81,6 +102,27 @@ const applyToOpportunity = async (req, res) => {
     }
     console.error(err);
     res.status(500).json({ error: 'Failed to apply' });
+  }
+};
+
+const getOpportunityById = async (req, res) => {
+  try {
+    const [[opp]] = await pool.query(`
+      SELECT o.*, org.name AS organization_name, org.description AS organization_description
+      FROM opportunities o
+      JOIN organizations org ON o.organization_id = org.id
+      WHERE o.id = ? AND o.status = 'active'
+    `, [req.params.id]);
+    if (!opp) return res.status(404).json({ error: 'Opportunity not found' });
+
+    const [tags] = await pool.query(
+      `SELECT t.id, t.name, t.type FROM opportunity_tags ot JOIN tags t ON ot.tag_id = t.id WHERE ot.opportunity_id = ?`,
+      [req.params.id]
+    );
+    res.json({ ...opp, tags });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to fetch opportunity' });
   }
 };
 
@@ -136,16 +178,32 @@ const markNotificationRead = async (req, res) => {
 const uploadCv = async (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
   const cvUrl = `/uploads/${req.file.filename}`;
+  const cvFilename = req.file.originalname;
   try {
-    await pool.query('UPDATE student_profiles SET cv_url = ? WHERE user_id = ?', [cvUrl, req.user.id]);
-    res.json({ message: 'CV uploaded', cvUrl });
+    await pool.query('UPDATE student_profiles SET cv_url = ?, cv_filename = ? WHERE user_id = ?', [cvUrl, cvFilename, req.user.id]);
+    res.json({ message: 'CV uploaded', cvUrl, cvFilename });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Failed to save CV' });
   }
 };
 
+const uploadAvatar = async (req, res) => {
+  if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
+  const avatarUrl = `/uploads/${req.file.filename}`;
+  try {
+    await pool.query(
+      'UPDATE student_profiles SET profile_picture_url = ? WHERE user_id = ?',
+      [avatarUrl, req.user.id]
+    );
+    res.json({ message: 'Avatar updated', avatarUrl });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to save avatar' });
+  }
+};
+
 module.exports = {
   getProfile, updateProfile, browseOpportunities, applyToOpportunity,
-  getMyApplications, getNotifications, markNotificationRead, uploadCv
+  getMyApplications, getNotifications, markNotificationRead, uploadCv, uploadAvatar, getOpportunityById
 };

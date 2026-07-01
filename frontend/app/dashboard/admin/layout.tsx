@@ -9,6 +9,7 @@ const links = [
   { href: '/dashboard/admin/organizations', label: 'Organizations' },
   { href: '/dashboard/admin/users', label: 'Users' },
   { href: '/dashboard/admin/opportunities', label: 'Opportunities' },
+  { href: '/dashboard/admin/reports', label: 'Reports' },
 ];
 
 export default function AdminLayout({ children }) {
