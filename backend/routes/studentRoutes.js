@@ -18,4 +18,5 @@ router.put('/notifications/:id/read', c.markNotificationRead);
 router.get('/recommendations', matchController.getRecommendations);
 router.get('/opportunities/:id', c.getOpportunityById);
 
+
 module.exports = router;

@@ -53,9 +53,25 @@ export default function CreateOpportunity() {
         <option value="pass">Pass</option> 
         </select>
 
-        <input name="minExperience" type="number" step="0.5" value={form.minExperience} onChange={handleChange} placeholder="Minimum years of experience" className="w-full border border-[var(--color-line)] p-2 rounded-md" />
-        <input name="location" value={form.location} onChange={handleChange} placeholder="Location" className="w-full border border-[var(--color-line)] p-2 rounded-md" />
-        <input name="deadline" type="date" value={form.deadline} onChange={handleChange} className="w-full border border-[var(--color-line)] p-2 rounded-md" />
+        <input
+          name="minExperience"
+          type="number"
+          step="0.5"
+          value={form.minExperience}
+          onChange={handleChange}
+          placeholder="Minimum years of experience"
+          className="w-full border border-[var(--color-line)] p-2 rounded-md"
+        />
+        <input
+          name="minimumMatchScore"
+          type="number"
+          min="0"
+          max="100"
+          value={form.minimumMatchScore}
+          onChange={handleChange}
+          placeholder="Minimum match score (optional, e.g. 60)"
+          className="w-full border border-[var(--color-line)] p-2 rounded-md"
+        />
 
         <TagPicker selectedIds={tagIds} onChange={setTagIds} />
 

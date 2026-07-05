@@ -34,7 +34,6 @@ export default function Home() {
     <main>
       {/* Header */}
       <header className="flex items-center justify-between px-6 md:px-12 py-6 border-b border-[var(--color-line)]">
-        <span className="font-display text-xl font-bold">Fursa</span>
         <nav className="flex gap-4 items-center text-sm">
           <Link href="/login" className="text-[var(--color-muted)] hover:text-[var(--color-ink)]">Log in</Link>
           <Link href="/register" className="bg-[var(--color-ink)] text-white px-4 py-2 rounded-md">Register</Link>
@@ -44,12 +43,11 @@ export default function Home() {
       {/* Hero */}
       <section className="grid md:grid-cols-2 gap-10 px-6 md:px-12 py-16 md:py-24 items-center max-w-6xl mx-auto">
         <div>
-          <p className="text-sm uppercase tracking-wide text-[var(--color-muted)] mb-3">Fursa — Swahili for &ldquo;opportunity&rdquo;</p>
           <h1 className="font-display text-4xl md:text-5xl font-bold leading-tight mb-5">
             Match score, not guesswork.
           </h1>
           <p className="text-[var(--color-muted)] text-lg mb-8 max-w-md">
-            Fursa reads your skills, education and interests, then ranks every job,
+             It reads your skills, education and interests, then ranks every job,
             internship and scholarship by how well it actually fits you.
             No more scrolling through listings meant for someone else.
           </p>
@@ -108,11 +106,11 @@ export default function Home() {
 
       {/* How it works */}
       <section className="px-6 md:px-12 py-16 border-t border-[var(--color-line)] max-w-6xl mx-auto">
-        <h2 className="font-display text-2xl font-bold mb-10">How Fursa works</h2>
+        <h2 className="font-display text-2xl font-bold mb-10">How it works</h2>
         <div className="grid md:grid-cols-3 gap-8">
           {[
             { n: '1', title: 'Build your profile', text: 'Add your education, skills, interests and location — once.' },
-            { n: '2', title: 'Get scored against every listing', text: 'Fursa weighs skills, education, location, experience and interests for each opportunity live on the platform.' },
+            { n: '2', title: 'Get scored against every listing', text: 'It weighs skills, education, location, experience and interests for each opportunity live on the platform.' },
             { n: '3', title: 'Apply to your best matches first', text: 'Skip the listings that were never meant for you, and focus where you actually fit.' },
           ].map((step) => (
             <div key={step.n}>
@@ -153,11 +151,6 @@ export default function Home() {
 
       {/* Footer */}
       <footer className="px-6 md:px-12 py-8 border-t border-[var(--color-line)] flex justify-between items-center text-sm text-[var(--color-muted)]">
-        <span>Fursa</span>
-        <div className="flex gap-4">
-          <Link href="/login" className="hover:text-[var(--color-ink)]">Log in</Link>
-          <Link href="/register" className="hover:text-[var(--color-ink)]">Register</Link>
-        </div>
       </footer>
     </main>
   );

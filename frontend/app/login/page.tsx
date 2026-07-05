@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 export default function Login() {
   const [form, setForm] = useState({ email: '', password: '' });
   const [error, setError] = useState('');
+
   const router = useRouter();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -22,16 +23,16 @@ export default function Login() {
         `${process.env.NEXT_PUBLIC_API_URL}/api/auth/login`,
         {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(form),
         }
       );
 
       const data = await res.json();
 
-      if (!res.ok) throw new Error(data.error || 'Login failed');
+      if (!res.ok) {
+        throw new Error(data.error || 'Login failed');
+      }
 
       localStorage.setItem('token', data.token);
       localStorage.setItem('role', data.role);
@@ -58,18 +59,40 @@ export default function Login() {
             required
           />
 
-          <input
-            name="password"
-            type="password"
-            placeholder="Password"
-            onChange={handleChange}
-            className="w-full rounded border border-[var(--color-line)] bg-transparent p-2"
-            required
-          />
-
-          {error && <p className="text-red-600">{error}</p>}
+          <div>
+            <input
+              name="password"
+              type="password"
+              placeholder="Password"
+              onChange={handleChange}
+              className="w-full rounded border border-[var(--color-line)] bg-transparent p-2"
+              required
+            />
+            <div className="mt-1 text-right">
+              <Link
+                href="/forgot-password"
+                className="text-xs text-[var(--color-muted)] hover:underline"
+              >
+                Forgot password?
+              </Link>
+            </div>
+          </div>
 
           <button type="submit" className="w-full bg-black text-white p-2 rounded">Login</button>
+
+          {error && (
+            <p className="text-sm text-red-600 text-center">
+              {error}
+              {error.toLowerCase().includes('verify') && (
+                <>
+                  {' '}
+                  <Link href="/check-email" className="underline">
+                    Resend verification
+                  </Link>
+                </>
+              )}
+            </p>
+          )}
         </form>
 
         <p className="mt-4 text-center text-sm text-[var(--color-muted)]">

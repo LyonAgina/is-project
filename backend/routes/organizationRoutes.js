@@ -5,7 +5,6 @@ const c = require('../controllers/organizationController');
 
 router.use(verifyToken, requireRole('organization'));
 
-
 router.get('/profile', c.getProfile);
 router.put('/profile', c.updateProfile);
 router.post('/opportunities', c.createOpportunity);
@@ -15,5 +14,7 @@ router.delete('/opportunities/:id', c.deleteOpportunity);
 router.get('/opportunities/:id/applicants', c.getApplicants);
 router.put('/applications/:appId/status', c.updateApplicationStatus);
 router.get('/reports', c.getOrgReports);
+router.post('/message-student', c.sendMessageToStudent);
+router.post('/message-applicants', c.sendMessageToApplicants);
 
 module.exports = router;

@@ -31,10 +31,10 @@ interface EducationCardProps {
 }
 
 function Badge({ label, variant = 'default' }: { label: string; variant?: 'default' | 'green' }) {
-  const base = 'inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full';
+  const base = 'inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-full';
   const colors = variant === 'green'
-    ? 'bg-emerald-900/30 text-emerald-400 border border-emerald-800/40'
-    : 'bg-[var(--color-line)] text-[var(--color-muted)] border border-[var(--color-line)]';
+    ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+    : 'bg-[var(--color-paper)] text-[var(--color-muted)] border border-[var(--color-line)]';
   return <span className={`${base} ${colors}`}>{label}</span>;
 }
 
@@ -61,8 +61,8 @@ export default function EducationCard({ data, onSaved }: EducationCardProps) {
         {hasData ? (
           <div className="flex gap-4 items-start">
             {/* Icon */}
-            <div className="w-11 h-11 rounded-lg bg-[#1a3a5c] flex items-center justify-center shrink-0">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            <div className="w-11 h-11 rounded-lg bg-blue-50 border border-blue-100 flex items-center justify-center shrink-0">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1a3a5c" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M22 10v6M2 10l10-5 10 5-10 5z" />
                 <path d="M6 12v5c3.3 2 8.7 2 12 0v-5" />
               </svg>

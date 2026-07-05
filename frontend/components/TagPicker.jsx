@@ -56,7 +56,7 @@ export default function TagPicker({ selectedIds, onChange }) {
         <input
           value={newTag}
           onChange={(e) => setNewTag(e.target.value)}
-          placeholder="Add a tag not listed"
+          placeholder={`Add a ${newType} not listed`}
           className="border border-[var(--color-line)] rounded-md px-2 py-1 text-sm flex-1"
         />
         <select value={newType} onChange={(e) => setNewType(e.target.value)} className="border border-[var(--color-line)] rounded-md px-2 py-1 text-sm">

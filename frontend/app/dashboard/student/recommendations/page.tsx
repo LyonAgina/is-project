@@ -67,36 +67,47 @@ export default function StudentRecommendations() {
       )}
 
       <div className="space-y-4">
-        {recs.map((r) => (
-          <div key={r.id} className="border border-[var(--color-line)] rounded-xl p-5">
-            <div className="flex justify-between items-start mb-3">
-              <div>
-                <h2 className="font-semibold">{r.title}</h2>
-                <p className="text-sm text-[var(--color-muted)]">{r.organization_name} · {r.category} · {r.location || 'Location not set'}</p>
+        {recs.map((r) => {
+          const detailHref = `/dashboard/student/opportunities/${r.id}`;
+          return (
+            <div key={r.id} className="border border-[var(--color-line)] rounded-xl p-5">
+              <div className="flex justify-between items-start mb-3">
+                <div>
+                  <Link href={detailHref}>
+                    <h2 className="font-semibold hover:underline cursor-pointer">{r.title}</h2>
+                  </Link>
+                  <p className="text-sm text-[var(--color-muted)]">{r.organization_name} · {r.category} · {r.location || 'Location not set'}</p>
+                </div>
+                <div className="text-right">
+                  <span className="font-mono text-2xl font-semibold text-[var(--color-accent)]">{Math.round(r.totalScore)}%</span>
+                  <p className="text-xs text-[var(--color-muted)]">match</p>
+                </div>
               </div>
-              <div className="text-right">
-                <span className="font-mono text-2xl font-semibold text-[var(--color-accent)]">{Math.round(r.totalScore)}%</span>
-                <p className="text-xs text-[var(--color-muted)]">match</p>
+
+              <div className="grid grid-cols-3 sm:grid-cols-6 gap-2 text-xs text-[var(--color-muted)] mb-4">
+                <span className="font-medium text-[var(--color-ink)]">Similarity Score {Math.round(r.textScore)}%</span>
+                <span>Skills {Math.round(r.skillsScore)}%</span>
+                <span>Education {Math.round(r.eduScore)}%</span>
+                <span>Location {Math.round(r.locScore)}%</span>
+                <span>Experience {Math.round(r.expScore)}%</span>
+                <span>Interests {Math.round(r.interestScore)}%</span>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => apply(r.id)}
+                  disabled={appliedIds.has(r.id) || !hasCv}
+                  className="bg-[var(--color-ink)] text-white px-3 py-1.5 rounded-md text-sm disabled:opacity-40"
+                >
+                  {appliedIds.has(r.id) ? 'Applied' : 'Apply'}
+                </button>
+                <Link href={detailHref} className="text-sm text-[var(--color-ink)] hover:underline">
+                  View details
+                </Link>
               </div>
             </div>
-
-            <div className="grid grid-cols-5 gap-2 text-xs text-[var(--color-muted)] mb-4">
-              <span>Skills {Math.round(r.skillsScore)}%</span>
-              <span>Education {Math.round(r.eduScore)}%</span>
-              <span>Location {Math.round(r.locScore)}%</span>
-              <span>Experience {Math.round(r.expScore)}%</span>
-              <span>Interests {Math.round(r.interestScore)}%</span>
-            </div>
-
-            <button
-              onClick={() => apply(r.id)}
-              disabled={appliedIds.has(r.id) || !hasCv}
-              className="bg-[var(--color-ink)] text-white px-3 py-1.5 rounded-md text-sm disabled:opacity-40"
-            >
-              {appliedIds.has(r.id) ? 'Applied' : 'Apply'}
-            </button>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );

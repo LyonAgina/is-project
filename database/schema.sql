@@ -16,14 +16,17 @@ USE is_project;
 -- profile tables below (1-to-1 extension pattern).
 -- ---------------------------------------------------------------------
 CREATE TABLE users (
-  id            INT AUTO_INCREMENT PRIMARY KEY,
-  email         VARCHAR(191) NOT NULL UNIQUE,
-  password_hash VARCHAR(255) NOT NULL,
-  role          ENUM('student', 'admin', 'organization') NOT NULL,
-  is_active     BOOLEAN NOT NULL DEFAULT TRUE,
-  created_at    TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  updated_at    TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
-                  ON UPDATE CURRENT_TIMESTAMP
+  id                  INT AUTO_INCREMENT PRIMARY KEY,
+  email               VARCHAR(191) NOT NULL UNIQUE,
+  password_hash       VARCHAR(255) NOT NULL,
+  role                ENUM('student', 'admin', 'organization') NOT NULL,
+  is_active           BOOLEAN NOT NULL DEFAULT TRUE,
+  email_verified      BOOLEAN NOT NULL DEFAULT FALSE,
+  verification_token  VARCHAR(255) NULL,
+  token_expires_at    TIMESTAMP NULL,
+  created_at          TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at          TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+                        ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB;
 
 -- ---------------------------------------------------------------------

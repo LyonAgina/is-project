@@ -6,6 +6,9 @@ const {
   getPendingOrganizations,
   verifyOrganization,
   getAllUsers,
+  toggleUserActive,
+  deleteUser,
+  sendNotificationToUser,
   getAllOpportunities,
   deleteOpportunity,
   deleteExpiredOpportunities,
@@ -19,6 +22,9 @@ router.get('/reports', getReports);
 router.get('/organizations/pending', getPendingOrganizations);
 router.put('/organizations/:id/verify', verifyOrganization);
 router.get('/users', getAllUsers);
+router.put('/users/:id/toggle-active', toggleUserActive);
+router.delete('/users/:id', deleteUser);
+router.post('/users/:id/notify', sendNotificationToUser);
 router.get('/opportunities', getAllOpportunities);
 router.delete('/opportunities/:id', deleteOpportunity);
 router.delete('/opportunities/expired', deleteExpiredOpportunities);

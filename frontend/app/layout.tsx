@@ -7,8 +7,8 @@ const bodyFont = IBM_Plex_Sans({ subsets: ['latin'], weight: ['400', '500', '600
 const dataFont = IBM_Plex_Mono({ subsets: ['latin'], weight: ['400', '500'], variable: '--font-data' });
 
 export const metadata = {
-  title: 'Fursa — your opportunity, scored',
-  description: 'Fursa matches Kenyan university students to jobs, internships and scholarships using a weighted skills, education, location and interest score.',
+  title: 'Opportunity Match — your opportunity, scored',
+  description: 'Opportunity Match connects Kenyan university students to jobs, internships and scholarships using a weighted skills, education, location and interest score.'
 };
 
 export default function RootLayout({ children }) {

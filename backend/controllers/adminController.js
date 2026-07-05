@@ -59,13 +59,96 @@ const verifyOrganization = async (req, res) => {
 
 const getAllUsers = async (req, res) => {
   try {
-    const [rows] = await pool.query(
-      `SELECT id, email, role, is_active, created_at FROM users ORDER BY created_at DESC`
-    );
+    const { search, role, status } = req.query;
+    let query = `SELECT id, email, role, is_active, created_at FROM users WHERE 1=1`;
+    const params = [];
+
+    if (search) {
+      query += ` AND email LIKE ?`;
+      params.push(`%${search}%`);
+    }
+    if (role && ['student', 'admin', 'organization'].includes(role)) {
+      query += ` AND role = ?`;
+      params.push(role);
+    }
+    if (status === 'active') {
+      query += ` AND is_active = 1`;
+    } else if (status === 'inactive') {
+      query += ` AND is_active = 0`;
+    }
+
+    query += ` ORDER BY created_at DESC`;
+    const [rows] = await pool.query(query, params);
     res.json(rows);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Failed to fetch users' });
+  }
+};
+
+const toggleUserActive = async (req, res) => {
+  const { id } = req.params;
+  if (parseInt(id) === req.user.id) {
+    return res.status(400).json({ error: 'Cannot deactivate your own account' });
+  }
+  try {
+    const [[user]] = await pool.query('SELECT is_active FROM users WHERE id = ?', [id]);
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    await pool.query('UPDATE users SET is_active = ? WHERE id = ?', [!user.is_active, id]);
+    res.json({ message: user.is_active ? 'User deactivated' : 'User activated', is_active: !user.is_active });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to update user' });
+  }
+};
+
+const deleteUser = async (req, res) => {
+  const { id } = req.params;
+  if (parseInt(id) === req.user.id) {
+    return res.status(400).json({ error: 'Cannot delete your own account' });
+  }
+  try {
+    const [[user]] = await pool.query('SELECT role FROM users WHERE id = ?', [id]);
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    await pool.query('DELETE FROM users WHERE id = ?', [id]);
+    res.json({ message: 'User deleted' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to delete user' });
+  }
+};
+
+const sendNotificationToUser = async (req, res) => {
+  const { id } = req.params;
+  const { message } = req.body;
+  if (!message || !message.trim()) {
+    return res.status(400).json({ error: 'Message is required' });
+  }
+  try {
+    const [[user]] = await pool.query('SELECT id, role FROM users WHERE id = ?', [id]);
+    if (!user) return res.status(404).json({ error: 'User not found' });
+
+    if (user.role === 'student') {
+      const [[profile]] = await pool.query(
+        `SELECT sp.id FROM student_profiles sp WHERE sp.user_id = ?`, [id]
+      );
+      if (!profile) return res.status(404).json({ error: 'Student profile not found' });
+      await pool.query(
+        'INSERT INTO notifications (student_id, message, type) VALUES (?, ?, ?)',
+        [profile.id, message.trim(), 'admin']
+      );
+    } else {
+      // organization or admin — use user_id column
+      await pool.query(
+        'INSERT INTO notifications (student_id, user_id, message, type) VALUES (NULL, ?, ?, ?)',
+        [id, message.trim(), 'admin']
+      );
+    }
+
+    res.json({ message: 'Notification sent' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to send notification' });
   }
 };
 
@@ -183,6 +266,9 @@ module.exports = {
   getPendingOrganizations,
   verifyOrganization,
   getAllUsers,
+  toggleUserActive,
+  deleteUser,
+  sendNotificationToUser,
   getAllOpportunities,
   deleteOpportunity,
   deleteExpiredOpportunities,

@@ -1,5 +1,7 @@
 const pool = require('../db');
 const upload = require('../middleware/upload');
+const { scoreStudentAgainstOpportunity } = require('./matchController');
+const sendApplicationStatusEmail = require('../utils/sendApplicationStatusEmail');
 
 const getProfile = async (req, res) => {
   try {
@@ -39,15 +41,19 @@ const updateProfile = async (req, res) => {
       location: req.body.location !== undefined ? req.body.location : current.location,
       bio: req.body.bio !== undefined ? req.body.bio : current.bio,
       cvUrl: req.body.cvUrl !== undefined ? req.body.cvUrl : current.cv_url,
+      notificationThreshold: req.body.notificationThreshold !== undefined ? req.body.notificationThreshold : current.notification_threshold,
     };
+
+    // Clamp threshold to a sane 0-100 range
+    const threshold = Math.min(100, Math.max(0, Number(merged.notificationThreshold) || 70));
 
     await connection.beginTransaction();
 
     await connection.query(
       `UPDATE student_profiles
-       SET full_name = ?, institution = ?, course_of_study = ?, education_level = ?, academic_grade = ?, experience_years = ?, location = ?, bio = ?, cv_url = ?
+       SET full_name = ?, institution = ?, course_of_study = ?, education_level = ?, academic_grade = ?, experience_years = ?, location = ?, bio = ?, cv_url = ?, notification_threshold = ?
        WHERE user_id = ?`,
-      [merged.fullName, merged.institution, merged.courseOfStudy, merged.educationLevel, merged.academicGrade || null, merged.experienceYears || 0, merged.location, merged.bio, merged.cvUrl, req.user.id]
+      [merged.fullName, merged.institution, merged.courseOfStudy, merged.educationLevel, merged.academicGrade || null, merged.experienceYears || 0, merged.location, merged.bio, merged.cvUrl, threshold, req.user.id]
     );
 
     if (Array.isArray(req.body.tagIds)) {
@@ -87,15 +93,59 @@ const browseOpportunities = async (req, res) => {
 const applyToOpportunity = async (req, res) => {
   const { opportunityId, coverNote } = req.body;
   try {
-    const [[profile]] = await pool.query('SELECT id, cv_url FROM student_profiles WHERE user_id = ?', [req.user.id]);
+    const [[profile]] = await pool.query(
+      'SELECT id, cv_url FROM student_profiles WHERE user_id = ?',
+      [req.user.id]
+    );
     if (!profile.cv_url) {
       return res.status(400).json({ error: 'Please upload your CV before applying', code: 'CV_REQUIRED' });
     }
-    await pool.query(
-      'INSERT INTO applications (student_id, opportunity_id, cover_note) VALUES (?, ?, ?)',
-      [profile.id, opportunityId, coverNote || null]
+
+    const [[opp]] = await pool.query(
+      'SELECT id, title, minimum_match_score FROM opportunities WHERE id = ?',
+      [opportunityId]
     );
-    res.status(201).json({ message: 'Application submitted' });
+    if (!opp) return res.status(404).json({ error: 'Opportunity not found' });
+
+    const { totalScore } = await scoreStudentAgainstOpportunity(profile.id, opportunityId);
+
+    const autoReject = opp.minimum_match_score !== null && totalScore < opp.minimum_match_score;
+    const initialStatus = autoReject ? 'rejected' : 'submitted';
+
+    const [result] = await pool.query(
+      'INSERT INTO applications (student_id, opportunity_id, cover_note, status) VALUES (?, ?, ?, ?)',
+      [profile.id, opportunityId, coverNote || null, initialStatus]
+    );
+
+    if (autoReject) {
+      const rejectMessage = `Thank you for applying to ${opp.title}. Unfortunately, your profile did not meet the minimum match score for this opportunity.`;
+
+      await pool.query(
+        'INSERT INTO notifications (student_id, opportunity_id, message, type) VALUES (?, ?, ?, ?)',
+        [profile.id, opportunityId, rejectMessage, 'application']
+      );
+
+      const [[userRow]] = await pool.query('SELECT email FROM users WHERE id = ?', [req.user.id]);
+      if (userRow?.email) {
+        try {
+          await sendApplicationStatusEmail(userRow.email, 'rejected', rejectMessage);
+        } catch (emailErr) {
+          console.error('Failed to send auto-reject email:', emailErr);
+        }
+      }
+
+      return res.status(201).json({
+        message: 'Application submitted, but did not meet the minimum match score and was automatically declined.',
+        autoRejected: true,
+        score: Math.round(totalScore),
+      });
+    }
+
+    res.status(201).json({
+      message: 'Application submitted',
+      autoRejected: false,
+      score: Math.round(totalScore),
+    });
   } catch (err) {
     if (err.code === 'ER_DUP_ENTRY') {
       return res.status(409).json({ error: 'You already applied to this opportunity' });
@@ -147,9 +197,11 @@ const getMyApplications = async (req, res) => {
 const getNotifications = async (req, res) => {
   try {
     const [rows] = await pool.query(`
-      SELECT n.id, n.message, n.is_read, n.sent_at
+      SELECT n.id, n.message, n.is_read, n.sent_at, n.type, n.opportunity_id, n.sent_by_org_id,
+             org.name AS sent_by_org_name
       FROM notifications n
       JOIN student_profiles sp ON n.student_id = sp.id
+      LEFT JOIN organizations org ON n.sent_by_org_id = org.id
       WHERE sp.user_id = ?
       ORDER BY n.sent_at DESC
     `, [req.user.id]);
@@ -205,5 +257,5 @@ const uploadAvatar = async (req, res) => {
 
 module.exports = {
   getProfile, updateProfile, browseOpportunities, applyToOpportunity,
-  getMyApplications, getNotifications, markNotificationRead, uploadCv, uploadAvatar, getOpportunityById
+  getMyApplications, getNotifications, markNotificationRead, uploadCv, uploadAvatar, getOpportunityById,
 };

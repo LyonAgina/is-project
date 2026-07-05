@@ -29,7 +29,7 @@ const updateProfile = async (req, res) => {
 };
 
 const createOpportunity = async (req, res) => {
-  const { title, category, description, minEducation, minAcademicGrade, minExperience, location, deadline, tagIds } = req.body;
+  const { title, category, description, minEducation, minAcademicGrade, minExperience, location, deadline, tagIds, minimumMatchScore } = req.body;
   const connection = await pool.getConnection();
   try {
     const [[org]] = await connection.query('SELECT id, verification_status FROM organizations WHERE user_id = ?', [req.user.id]);
@@ -40,9 +40,9 @@ const createOpportunity = async (req, res) => {
 
     await connection.beginTransaction();
     const [result] = await connection.query(
-      `INSERT INTO opportunities (organization_id, title, category, description, min_education, min_academic_grade, min_experience, location, deadline, status)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'active')`,
-      [org.id, title, category, description, minEducation || null, minAcademicGrade || null, minExperience || 0, location, deadline || null]
+      `INSERT INTO opportunities (organization_id, title, category, description, min_education, min_academic_grade, min_experience, location, deadline, status, minimum_match_score)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'active', ?)`,
+      [org.id, title, category, description, minEducation || null, minAcademicGrade || null, minExperience || 0, location, deadline || null, minimumMatchScore || null]
     );
 
     if (Array.isArray(tagIds)) {
@@ -112,7 +112,8 @@ const getApplicants = async (req, res) => {
     const [rows] = await pool.query(`
       SELECT a.id, a.status, a.applied_at, sp.full_name, sp.institution, sp.cv_url, sp.cv_filename,
              sp.education_level, sp.academic_grade, sp.experience_years, sp.location,
-             u.email, ms.total_score
+             u.email, ms.total_score, ms.text_similarity_score, ms.skills_score,
+             ms.education_score, ms.location_score, ms.experience_score, ms.interest_score
       FROM applications a
       JOIN student_profiles sp ON a.student_id = sp.id
       JOIN users u ON sp.user_id = u.id
@@ -129,16 +130,52 @@ const getApplicants = async (req, res) => {
   }
 };
 
+const sendApplicationStatusEmail = require('../utils/sendApplicationStatusEmail');
+
 const updateApplicationStatus = async (req, res) => {
-  const { status } = req.body;
+  const { status, message } = req.body;
+  const validStatuses = ['submitted', 'under_review', 'accepted', 'rejected'];
+  if (!validStatuses.includes(status)) {
+    return res.status(400).json({ error: 'Invalid status' });
+  }
+
+  const DEFAULT_MESSAGES = {
+    under_review: 'Your application is currently under review. We will get back to you soon.',
+    accepted: 'Congratulations! Your application has been accepted.',
+    rejected: 'Thank you for applying. Unfortunately, your application was not successful at this time.',
+    submitted: 'Your application has been received.',
+  };
+
   try {
-    await pool.query(`
-      UPDATE applications a
+    const [[app]] = await pool.query(`
+      SELECT a.id, a.student_id, a.status AS old_status, u.email
+      FROM applications a
       JOIN opportunities o ON a.opportunity_id = o.id
       JOIN organizations org ON o.organization_id = org.id
-      SET a.status = ?
+      JOIN student_profiles sp ON a.student_id = sp.id
+      JOIN users u ON sp.user_id = u.id
       WHERE a.id = ? AND org.user_id = ?
-    `, [status, req.params.appId, req.user.id]);
+    `, [req.params.appId, req.user.id]);
+
+    if (!app) return res.status(404).json({ error: 'Application not found' });
+
+    await pool.query(`
+      UPDATE applications SET status = ?, status_updated_at = NOW() WHERE id = ?
+    `, [status, req.params.appId]);
+
+    const notifMessage = (message && message.trim()) ? message.trim() : DEFAULT_MESSAGES[status];
+
+    await pool.query(
+      'INSERT INTO notifications (student_id, message, type) VALUES (?, ?, ?)',
+      [app.student_id, notifMessage, 'application']
+    );
+
+    try {
+      await sendApplicationStatusEmail(app.email, status, notifMessage);
+    } catch (emailErr) {
+      console.error('Failed to send application status email:', emailErr);
+    }
+
     res.json({ message: 'Application status updated' });
   } catch (err) {
     console.error(err);
@@ -209,8 +246,85 @@ const getOrgReports = async (req, res) => {
   }
 };
 
+const sendOrgMessageEmail = require('../utils/sendOrgMessageEmail');
+
+// Send to one student directly
+const sendMessageToStudent = async (req, res) => {
+  const { studentId, message } = req.body;
+  if (!studentId || !message?.trim()) {
+    return res.status(400).json({ error: 'studentId and message are required' });
+  }
+
+  try {
+    const [[org]] = await pool.query('SELECT id, name FROM organizations WHERE user_id = ?', [req.user.id]);
+    const [[student]] = await pool.query(
+      'SELECT sp.id, u.email FROM student_profiles sp JOIN users u ON sp.user_id = u.id WHERE sp.id = ?',
+      [studentId]
+    );
+    if (!student) return res.status(404).json({ error: 'Student not found' });
+
+    await pool.query(
+      'INSERT INTO notifications (student_id, message, type, sent_by_org_id) VALUES (?, ?, ?, ?)',
+      [studentId, message.trim(), 'org_message', org.id]
+    );
+
+    try {
+      await sendOrgMessageEmail(student.email, org.name, message.trim());
+    } catch (emailErr) {
+      console.error('Failed to send org message email:', emailErr);
+    }
+
+    res.json({ message: 'Message sent' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to send message' });
+  }
+};
+
+// Broadcast to all applicants of one opportunity
+const sendMessageToApplicants = async (req, res) => {
+  const { opportunityId, message } = req.body;
+  if (!opportunityId || !message?.trim()) {
+    return res.status(400).json({ error: 'opportunityId and message are required' });
+  }
+
+  try {
+    const [[org]] = await pool.query('SELECT id, name FROM organizations WHERE user_id = ?', [req.user.id]);
+
+    const [applicants] = await pool.query(`
+      SELECT sp.id AS student_id, u.email
+      FROM applications a
+      JOIN student_profiles sp ON a.student_id = sp.id
+      JOIN users u ON sp.user_id = u.id
+      JOIN opportunities o ON a.opportunity_id = o.id
+      WHERE a.opportunity_id = ? AND o.organization_id = ?
+    `, [opportunityId, org.id]);
+
+    if (applicants.length === 0) {
+      return res.status(404).json({ error: 'No applicants found for this opportunity' });
+    }
+
+    for (const applicant of applicants) {
+      await pool.query(
+        'INSERT INTO notifications (student_id, message, type, sent_by_org_id) VALUES (?, ?, ?, ?)',
+        [applicant.student_id, message.trim(), 'org_message', org.id]
+      );
+      try {
+        await sendOrgMessageEmail(applicant.email, org.name, message.trim());
+      } catch (emailErr) {
+        console.error(`Failed to email ${applicant.email}:`, emailErr);
+      }
+    }
+
+    res.json({ message: `Message sent to ${applicants.length} applicant(s)` });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to send broadcast message' });
+  }
+};
+
 module.exports = {
   getProfile, updateProfile, createOpportunity, getMyOpportunities,
   updateOpportunityStatus, deleteOpportunity, getApplicants, updateApplicationStatus,
-  getOrgReports,
+  getOrgReports, sendMessageToStudent, sendMessageToApplicants,
 };

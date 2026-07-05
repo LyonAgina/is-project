@@ -92,7 +92,7 @@ export default function CVCard({ data, onUploaded }: CVCardProps) {
         ref={fileInputRef}
         type="file"
         accept=".pdf,.doc,.docx"
-        className="hidden"
+        style={{ display: 'none' }}
         onChange={handleUpload}
       />
     </ProfileCard>

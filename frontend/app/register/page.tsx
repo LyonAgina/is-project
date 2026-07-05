@@ -8,14 +8,16 @@ export default function Register() {
   const [role, setRole] = useState('student');
 
   const [form, setForm] = useState({
+    fullName: '',
     email: '',
     password: '',
-    fullName: '',
+    confirmPassword: '',
     organizationName: '',
     organizationType: 'company',
   });
 
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
   const router = useRouter();
 
   const handleChange = (
@@ -31,8 +33,19 @@ export default function Register() {
     e: React.FormEvent<HTMLFormElement>
   ) => {
     e.preventDefault();
-
     setError('');
+
+    if (form.password !== form.confirmPassword) {
+      setError('Passwords do not match.');
+      return;
+    }
+
+    if (form.password.length < 8) {
+      setError('Password must be at least 8 characters.');
+      return;
+    }
+
+    setLoading(true);
 
     try {
       const res = await fetch(
@@ -43,7 +56,11 @@ export default function Register() {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            ...form,
+            email: form.email,
+            password: form.password,
+            fullName: form.fullName,
+            organizationName: form.organizationName,
+            organizationType: form.organizationType,
             role,
           }),
         }
@@ -53,9 +70,11 @@ export default function Register() {
 
       if (!res.ok) throw new Error(data.error || 'Registration failed');
 
-      router.push('/login');
+      router.push(`/check-email?email=${encodeURIComponent(form.email)}`);
     } catch (err: any) {
       setError(err.message);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -76,28 +95,11 @@ export default function Register() {
             </option>
           </select>
 
-          <input
-            name="email"
-            type="email"
-            placeholder="Email"
-            onChange={handleChange}
-            className="w-full rounded border border-[var(--color-line)] bg-transparent p-2"
-            required
-          />
-
-          <input
-            name="password"
-            type="password"
-            placeholder="Password"
-            onChange={handleChange}
-            className="w-full rounded border border-[var(--color-line)] bg-transparent p-2"
-            required
-          />
-
           {role === 'student' && (
             <input
               name="fullName"
               placeholder="Full Name"
+              value={form.fullName}
               onChange={handleChange}
               className="w-full rounded border border-[var(--color-line)] bg-transparent p-2"
               required
@@ -109,6 +111,7 @@ export default function Register() {
               <input
                 name="organizationName"
                 placeholder="Organization Name"
+                value={form.organizationName}
                 onChange={handleChange}
                 className="w-full rounded border border-[var(--color-line)] bg-transparent p-2"
                 required
@@ -116,6 +119,7 @@ export default function Register() {
 
               <select
                 name="organizationType"
+                value={form.organizationType}
                 onChange={handleChange}
                 className="w-full rounded border border-[var(--color-line)] bg-transparent p-2"
               >
@@ -127,9 +131,47 @@ export default function Register() {
             </>
           )}
 
-          {error && <p className="text-red-600">{error}</p>}
+          <input
+            name="email"
+            type="email"
+            placeholder="Email"
+            value={form.email}
+            onChange={handleChange}
+            className="w-full rounded border border-[var(--color-line)] bg-transparent p-2"
+            required
+          />
 
-          <button type="submit" className="w-full bg-black text-white p-2 rounded">Register</button>
+          <input
+            name="password"
+            type="password"
+            placeholder="Password"
+            value={form.password}
+            onChange={handleChange}
+            className="w-full rounded border border-[var(--color-line)] bg-transparent p-2"
+            required
+            minLength={8}
+          />
+
+          <input
+            name="confirmPassword"
+            type="password"
+            placeholder="Confirm Password"
+            value={form.confirmPassword}
+            onChange={handleChange}
+            className="w-full rounded border border-[var(--color-line)] bg-transparent p-2"
+            required
+            minLength={8}
+          />
+
+          {error && <p className="text-red-600 text-sm">{error}</p>}
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full bg-black text-white p-2 rounded disabled:opacity-60"
+          >
+            {loading ? 'Creating account…' : 'Register'}
+          </button>
         </form>
 
         <p className="mt-4 text-center text-sm text-[var(--color-muted)]">

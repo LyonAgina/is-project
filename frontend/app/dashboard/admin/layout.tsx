@@ -36,7 +36,7 @@ export default function AdminLayout({ children }) {
   return (
     <div className="min-h-screen flex">
       <aside className="w-56 border-r border-[var(--color-line)] p-6 flex flex-col">
-        <span className="font-display text-lg font-bold mb-8">Fursa Admin</span>
+        <span className="font-display text-lg font-bold mb-8">Admin Panel</span>
         <nav className="flex flex-col gap-1 flex-1">
           {links.map((l) => (
             <Link
@@ -62,7 +62,7 @@ export default function AdminLayout({ children }) {
         </header>
         <main className="flex-1 p-8">{children}</main>
         <footer className="border-t border-[var(--color-line)] px-8 py-4 text-xs text-[var(--color-muted)]">
-          Fursa — admin tools
+          Admin tools
         </footer>
       </div>
     </div>

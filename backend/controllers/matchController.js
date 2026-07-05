@@ -1,4 +1,7 @@
 const pool = require('../db');
+const { textSimilarityScore } = require('../utils/textSimilarity');
+const extractCvText = require('../utils/extractCvText');
+const sendMatchEmail = require('../utils/sendMatchEmail');
 
 const EDU_RANK = { certificate: 1, diploma: 2, undergraduate: 3, graduate: 4 };
 const GRADE_RANK = { pass: 1, second_lower: 2, second_upper: 3, first_class: 4 };
@@ -44,59 +47,112 @@ function tagOverlapScore(studentTagIds, requiredTagIds) {
   return (overlap / requiredTagIds.length) * 100;
 }
 
+// Fetches everything needed to score ONE student against ONE opportunity,
+// computes the weighted total, and upserts into match_scores.
+// Returns { totalScore, breakdown }.
+async function scoreStudentAgainstOpportunity(studentId, opportunityId) {
+  const [[student]] = await pool.query(
+    `SELECT id, education_level, academic_grade, experience_years, location, cv_url
+     FROM student_profiles WHERE id = ?`,
+    [studentId]
+  );
+  if (!student) throw new Error('Student profile not found');
+
+  const [[opp]] = await pool.query(
+    `SELECT id, title, description, min_education, min_academic_grade, min_experience, location
+     FROM opportunities WHERE id = ?`,
+    [opportunityId]
+  );
+  if (!opp) throw new Error('Opportunity not found');
+
+  const [studentTagRows] = await pool.query(
+    'SELECT st.tag_id, t.type FROM student_tags st JOIN tags t ON st.tag_id = t.id WHERE st.student_id = ?',
+    [studentId]
+  );
+  const studentSkillIds = studentTagRows.filter((t) => t.type === 'skill').map((t) => t.tag_id);
+  const studentInterestIds = studentTagRows.filter((t) => t.type === 'interest').map((t) => t.tag_id);
+
+  const [reqTagRows] = await pool.query(
+    `SELECT ot.tag_id, t.type FROM opportunity_tags ot JOIN tags t ON ot.tag_id = t.id WHERE ot.opportunity_id = ?`,
+    [opportunityId]
+  );
+  const reqSkillIds = reqTagRows.filter((t) => t.type === 'skill').map((t) => t.tag_id);
+  const reqInterestIds = reqTagRows.filter((t) => t.type === 'interest').map((t) => t.tag_id);
+
+  const studentText = await extractCvText(student.cv_url);
+  const skillsScore = tagOverlapScore(studentSkillIds, reqSkillIds);
+  const interestScore = tagOverlapScore(studentInterestIds, reqInterestIds);
+  const eduScore = educationScore(student.education_level, student.academic_grade, opp.min_education, opp.min_academic_grade);
+  const locScore = locationScore(student.location, opp.location);
+  const expScore = experienceScore(student.experience_years, opp.min_experience);
+  const textScore = textSimilarityScore(studentText, opp.description);
+
+  const totalScore =
+    textScore * 0.5 +
+    skillsScore * 0.1 +
+    eduScore * 0.1 +
+    locScore * 0.1 +
+    expScore * 0.1 +
+    interestScore * 0.1;
+
+  await pool.query(
+    `INSERT INTO match_scores (student_id, opportunity_id, skills_score, education_score, location_score, experience_score, interest_score, text_similarity_score, total_score)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+     ON DUPLICATE KEY UPDATE
+       skills_score = ?, education_score = ?, location_score = ?, experience_score = ?, interest_score = ?, text_similarity_score = ?, total_score = ?, generated_at = NOW()`,
+    [
+      studentId, opportunityId, skillsScore, eduScore, locScore, expScore, interestScore, textScore, totalScore,
+      skillsScore, eduScore, locScore, expScore, interestScore, textScore, totalScore,
+    ]
+  );
+
+  return { totalScore, breakdown: { skillsScore, eduScore, locScore, expScore, interestScore, textScore } };
+}
+
 const computeAndSaveRecommendations = async (studentUserId) => {
   const [[student]] = await pool.query(
-    `SELECT id, education_level, academic_grade, experience_years, location FROM student_profiles WHERE user_id = ?`,
+    `SELECT id, notification_threshold FROM student_profiles WHERE user_id = ?`,
     [studentUserId]
   );
   if (!student) throw new Error('Student profile not found');
 
-  const [studentTagRows] = await pool.query('SELECT st.tag_id, t.type FROM student_tags st JOIN tags t ON st.tag_id = t.id WHERE st.student_id = ?', [student.id]);
-  const studentSkillIds = studentTagRows.filter((t) => t.type === 'skill').map((t) => t.tag_id);
-  const studentInterestIds = studentTagRows.filter((t) => t.type === 'interest').map((t) => t.tag_id);
+  const [[userRow]] = await pool.query('SELECT email FROM users WHERE id = ?', [studentUserId]);
 
   const [opportunities] = await pool.query(`
-    SELECT o.id, o.title, o.category, o.min_education, o.min_academic_grade, o.min_experience, o.location, o.deadline, org.name AS organization_name
+    SELECT o.id, o.title, o.category, o.description, o.location, o.deadline, org.name AS organization_name
     FROM opportunities o JOIN organizations org ON o.organization_id = org.id
     WHERE o.status = 'active'
   `);
 
   if (opportunities.length === 0) return [];
 
-  const oppIds = opportunities.map((o) => o.id);
-  const [tagRows] = await pool.query(
-    `SELECT ot.opportunity_id, ot.tag_id, t.type FROM opportunity_tags ot JOIN tags t ON ot.tag_id = t.id WHERE ot.opportunity_id IN (?)`,
-    [oppIds]
+  const [alreadyNotified] = await pool.query(
+    `SELECT opportunity_id FROM notifications WHERE student_id = ? AND type = 'match'`,
+    [student.id]
   );
+  const notifiedOppIds = new Set(alreadyNotified.map((r) => r.opportunity_id));
 
   const results = [];
 
   for (const opp of opportunities) {
-    const reqTags = tagRows.filter((t) => t.opportunity_id === opp.id);
-    const reqSkillIds = reqTags.filter((t) => t.type === 'skill').map((t) => t.tag_id);
-    const reqInterestIds = reqTags.filter((t) => t.type === 'interest').map((t) => t.tag_id);
+    const { totalScore, breakdown } = await scoreStudentAgainstOpportunity(student.id, opp.id);
 
-    const skillsScore = tagOverlapScore(studentSkillIds, reqSkillIds);
-    const interestScore = tagOverlapScore(studentInterestIds, reqInterestIds);
-    const eduScore = educationScore(student.education_level, student.academic_grade, opp.min_education, opp.min_academic_grade);
-    const locScore = locationScore(student.location, opp.location);
-    const expScore = experienceScore(student.experience_years, opp.min_experience);
+    if (totalScore >= student.notification_threshold && !notifiedOppIds.has(opp.id)) {
+      await pool.query(
+        'INSERT INTO notifications (student_id, opportunity_id, message, type) VALUES (?, ?, ?, ?)',
+        [student.id, opp.id, `New match: ${opp.title} (${Math.round(totalScore)}% match)`, 'match']
+      );
 
-    const totalScore =
-      skillsScore * 0.5 + eduScore * 0.15 + locScore * 0.15 + expScore * 0.1 + interestScore * 0.1;
+      if (userRow?.email) {
+        try {
+          await sendMatchEmail(userRow.email, opp, Math.round(totalScore));
+        } catch (emailErr) {
+          console.error('Failed to send match email:', emailErr);
+        }
+      }
+    }
 
-    await pool.query(
-      `INSERT INTO match_scores (student_id, opportunity_id, skills_score, education_score, location_score, experience_score, interest_score, total_score)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-       ON DUPLICATE KEY UPDATE
-         skills_score = ?, education_score = ?, location_score = ?, experience_score = ?, interest_score = ?, total_score = ?, generated_at = NOW()`,
-      [
-        student.id, opp.id, skillsScore, eduScore, locScore, expScore, interestScore, totalScore,
-        skillsScore, eduScore, locScore, expScore, interestScore, totalScore,
-      ]
-    );
-
-    results.push({ ...opp, skillsScore, eduScore, locScore, expScore, interestScore, totalScore });
+    results.push({ ...opp, ...breakdown, totalScore });
   }
 
   results.sort((a, b) => b.totalScore - a.totalScore);
@@ -113,4 +169,7 @@ const getRecommendations = async (req, res) => {
   }
 };
 
-module.exports = { getRecommendations };
+module.exports = {
+  getRecommendations,
+  scoreStudentAgainstOpportunity,
+};
