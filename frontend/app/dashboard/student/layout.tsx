@@ -64,17 +64,17 @@ export default function StudentLayout({ children }) {
       <aside style={{ width: '260px', backgroundColor: '#ffffff', borderRight: '1px solid var(--color-line)', padding: '24px', display: 'flex', flexDirection: 'column', position: 'fixed', top: 0, bottom: 0, left: 0, zIndex: 20 }}>
         
         {/* Logo Section */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '40px' }}>
-          <div style={{ backgroundColor: '#1e3a8a', width: '36px', height: '36px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 4px rgba(30, 58, 138, 0.2)' }}>
-            <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: '20px', height: '20px' }}>
-              <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
-              <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
-              <line x1="12" y1="22.08" x2="12" y2="12"></line>
-            </svg>
-          </div>
-          <span style={{ fontSize: '18px', fontWeight: '700', color: 'var(--color-ink)' }}>Opportunity Hub</span>
+        <div style={{ padding: '0 16px', marginBottom: '40px' }}>
+          <span style={{
+            fontFamily: 'var(--font-disp), sans-serif',
+            fontSize: '18px',
+            fontWeight: '700',
+            color: 'var(--color-ink)',
+            letterSpacing: '-0.01em'
+          }}>
+            Opportunity Hub
+          </span>
         </div>
-        
         {/* Navigation */}
         <nav style={{ display: 'flex', flexDirection: 'column', gap: '8px', flex: 1 }}>
           {links.map((l) => {

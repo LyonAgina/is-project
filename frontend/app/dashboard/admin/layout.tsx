@@ -39,13 +39,16 @@ export default function AdminLayout({ children }) {
       <aside style={{ width: '260px', backgroundColor: '#ffffff', borderRight: '1px solid var(--color-line)', padding: '24px', display: 'flex', flexDirection: 'column', position: 'fixed', top: 0, bottom: 0, left: 0, zIndex: 20 }}>
         
         {/* Logo Section */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '40px' }}>
-          <div style={{ backgroundColor: '#1e3a8a', width: '36px', height: '36px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 4px rgba(30, 58, 138, 0.2)' }}>
-            <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ width: '20px', height: '20px' }}>
-              <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
-            </svg>
-          </div>
-          <span style={{ fontSize: '18px', fontWeight: '700', color: 'var(--color-ink)' }}>Admin Control</span>
+        <div style={{ padding: '0 16px', marginBottom: '40px' }}>
+          <span style={{
+            fontFamily: 'var(--font-disp), sans-serif',
+            fontSize: '18px',
+            fontWeight: '700',
+            color: 'var(--color-ink)',
+            letterSpacing: '-0.01em'
+          }}>
+            Opportunity Hub
+          </span>
         </div>
         
         {/* Navigation */}
