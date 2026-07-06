@@ -3,12 +3,13 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { apiFetch } from '@/lib/api';
+import ProfileCompleteness from '@/app/dashboard/student/profile/components/ProfileCompleteness';
 
-const STATUS_COLORS = {
-  submitted: { fg: '#4b5563', dot: '#9ca3af' },
-  under_review: { fg: '#92400e', dot: '#f59e0b' },
-  accepted: { fg: '#15803d', dot: '#22c55e' },
-  rejected: { fg: '#b91c1c', dot: '#ef4444' },
+const STATUS_STYLES = {
+  submitted: { dot: 'var(--color-muted)', text: 'var(--color-ink)', bg: '#f1f5f9' },
+  under_review: { dot: '#3b82f6', text: '#1e40af', bg: '#dbeafe' }, // Sky Blue to Navy
+  accepted: { dot: '#10b981', text: '#065f46', bg: '#d1fae5' }, // Green for accepted
+  rejected: { dot: '#ef4444', text: '#991b1b', bg: '#fee2e2' }, // Red for rejected
 };
 
 const STATUS_LABELS = {
@@ -18,29 +19,18 @@ const STATUS_LABELS = {
   rejected: 'Rejected',
 };
 
-const AVATAR_PALETTE = [
-  { bg: '#eff6ff', fg: '#1d4ed8' },
-  { bg: '#faf5ff', fg: '#7e22ce' },
-  { bg: '#f0fdf4', fg: '#15803d' },
-  { bg: '#fffbeb', fg: '#92400e' },
-  { bg: '#fdf2f8', fg: '#be185d' },
-];
-
-function avatarColor(name) {
-  const str = name || '?';
-  let hash = 0;
-  for (let i = 0; i < str.length; i++) hash = str.charCodeAt(i) + ((hash << 5) - hash);
-  return AVATAR_PALETTE[Math.abs(hash) % AVATAR_PALETTE.length];
-}
-
 export default function StudentHome() {
   const [profile, setProfile] = useState(null);
   const [apps, setApps] = useState([]);
   const [unread, setUnread] = useState(0);
   const [opps, setOpps] = useState([]);
+  const [tags, setTags] = useState([]);
 
   useEffect(() => {
-    apiFetch('/api/student/profile').then(r => r.json()).then(setProfile).catch(() => {});
+    apiFetch('/api/student/profile').then(r => r.json()).then(d => {
+      setProfile(d);
+      setTags(Array.isArray(d.tags) ? d.tags : []);
+    }).catch(() => {});
     apiFetch('/api/student/applications').then(r => r.json()).then(d => setApps(Array.isArray(d) ? d : [])).catch(() => {});
     apiFetch('/api/student/notifications').then(r => r.json()).then(d => setUnread(Array.isArray(d) ? d.filter(n => !n.is_read).length : 0)).catch(() => {});
     apiFetch('/api/student/opportunities').then(r => r.json()).then(d => setOpps(Array.isArray(d) ? d.slice(0, 3) : [])).catch(() => {});
@@ -51,112 +41,127 @@ export default function StudentHome() {
   const recent = apps.slice(0, 4);
 
   return (
-    <div className="max-w-4xl">
-      {/* Welcome */}
-      <div className="mb-8">
-        <h1 className="font-display text-2xl font-bold">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '32px', paddingBottom: '40px' }}>
+      
+      {/* Welcome Section */}
+      <div>
+        <h1 style={{ fontSize: '28px', fontWeight: '700', color: 'var(--color-ink)', margin: '0 0 8px 0' }}>
           Welcome back{profile?.full_name ? `, ${profile.full_name.split(' ')[0]}` : ''}
         </h1>
-        <p className="mt-1" style={{ color: '#6b7280' }}>Here's a summary of your activity.</p>
+        <p style={{ margin: 0, color: 'var(--color-muted)' }}>Here is a summary of your application activity.</p>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
+      <ProfileCompleteness profile={profile} tags={tags} />
+
+      {/* Stats Cards - Forced Grid with explicit gaps */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '20px' }}>
         {[
-          { label: 'Applications', value: apps.length, href: '/dashboard/student/applications', dot: '#9ca3af', color: '#111827' },
-          { label: 'Under review', value: underReview, href: '/dashboard/student/applications', dot: '#f59e0b', color: '#92400e' },
-          { label: 'Accepted', value: accepted, href: '/dashboard/student/applications', dot: '#22c55e', color: '#15803d' },
-          { label: 'Unread', value: unread, href: '/dashboard/student/inbox', dot: '#ef4444', color: '#b91c1c' },
+          { label: 'Applications', value: apps.length, href: '/dashboard/student/applications', dot: '#1e3a8a' }, // Navy
+          { label: 'Under review', value: underReview, href: '/dashboard/student/applications', dot: '#3b82f6' }, // Sky Blue
+          { label: 'Accepted', value: accepted, href: '/dashboard/student/applications', dot: '#10b981' },
+          { label: 'Unread Inbox', value: unread, href: '/dashboard/student/inbox', dot: '#ef4444' },
         ].map(s => (
           <Link
             key={s.label}
             href={s.href}
-            className="rounded-xl p-5 transition-all hover:shadow-sm"
-            style={{ border: '1px solid #e5e7eb', background: '#ffffff' }}
+            style={{
+              backgroundColor: '#ffffff', borderRadius: '16px', padding: '24px', 
+              border: '1px solid var(--color-line)', textDecoration: 'none',
+              boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)', display: 'flex', 
+              flexDirection: 'column', justifyContent: 'space-between'
+            }}
           >
-            <div className="flex items-center gap-2 mb-2.5">
-              <span className="w-2 h-2 rounded-full shrink-0" style={{ background: s.dot }} />
-              <p className="text-xs font-medium uppercase tracking-wide" style={{ color: '#6b7280' }}>{s.label}</p>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
+              <span style={{ width: '10px', height: '10px', borderRadius: '50%', backgroundColor: s.dot }} />
+              <p style={{ margin: 0, fontSize: '12px', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--color-muted)' }}>
+                {s.label}
+              </p>
             </div>
-            <p className="text-3xl font-bold" style={{ color: s.color }}>{s.value}</p>
+            <p style={{ margin: 0, fontSize: '36px', fontWeight: '700', color: 'var(--color-ink)' }}>{s.value}</p>
           </Link>
         ))}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-        {/* Recent applications */}
-        <div className="rounded-xl p-5" style={{ border: '1px solid #e5e7eb', background: '#ffffff' }}>
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="font-semibold text-sm">Recent applications</h2>
-            <Link href="/dashboard/student/applications" className="text-xs font-medium hover:underline" style={{ color: '#6b7280' }}>View all →</Link>
+      {/* Recent & New Opportunities Grid */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '24px' }}>
+        
+        {/* Recent Applications */}
+        <div style={{ backgroundColor: '#ffffff', borderRadius: '16px', border: '1px solid var(--color-line)', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)', overflow: 'hidden' }}>
+          <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--color-line)', backgroundColor: '#f8fafc', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <h2 style={{ margin: 0, fontSize: '16px', fontWeight: '600', color: 'var(--color-ink)' }}>Recent applications</h2>
+            <Link href="/dashboard/student/applications" style={{ fontSize: '13px', fontWeight: '500', color: '#1e3a8a', textDecoration: 'none' }}>
+              View all &rarr;
+            </Link>
           </div>
-          {recent.length === 0 ? (
-            <div className="text-center py-8">
-              <p className="text-sm" style={{ color: '#6b7280' }}>No applications yet.</p>
-              <Link href="/dashboard/student/opportunities" className="text-sm font-medium hover:underline mt-2 inline-block" style={{ color: '#111827' }}>Browse opportunities →</Link>
-            </div>
-          ) : (
-            <div className="space-y-1">
-              {recent.map((a, i) => {
-                const c = STATUS_COLORS[a.status] || STATUS_COLORS.submitted;
-                return (
-                  <div
-                    key={a.id}
-                    className="flex items-center gap-3 py-2.5"
-                    style={{ borderTop: i > 0 ? '1px solid #f3f4f6' : 'none' }}
-                  >
-                    <div className="w-2 h-2 rounded-full shrink-0" style={{ background: c.dot }} />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium truncate">{a.title}</p>
-                      <p className="text-xs truncate" style={{ color: '#6b7280' }}>{a.organization_name}</p>
+          <div>
+            {recent.length === 0 ? (
+              <div style={{ padding: '48px 24px', textAlign: 'center' }}>
+                <p style={{ color: 'var(--color-muted)', marginBottom: '8px' }}>No applications yet.</p>
+                <Link href="/dashboard/student/opportunities" style={{ fontSize: '14px', fontWeight: '500', color: '#1e3a8a' }}>Browse opportunities</Link>
+              </div>
+            ) : (
+              <div>
+                {recent.map((a, i) => {
+                  const s = STATUS_STYLES[a.status] || STATUS_STYLES.submitted;
+                  return (
+                    <div key={a.id} style={{ padding: '16px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: i !== 0 ? '1px solid var(--color-line)' : 'none' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '16px', overflow: 'hidden', paddingRight: '16px' }}>
+                        <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: s.dot, flexShrink: 0 }} />
+                        <div style={{ minWidth: 0 }}>
+                          <p style={{ margin: '0 0 4px 0', fontSize: '14px', fontWeight: '600', color: 'var(--color-ink)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{a.title}</p>
+                          <p style={{ margin: 0, fontSize: '13px', color: 'var(--color-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{a.organization_name}</p>
+                        </div>
+                      </div>
+                      <span style={{ backgroundColor: s.bg, color: s.text, padding: '4px 12px', borderRadius: '6px', fontSize: '12px', fontWeight: '600', whiteSpace: 'nowrap' }}>
+                        {STATUS_LABELS[a.status]}
+                      </span>
                     </div>
-                    <span
-                      className="text-xs font-medium px-2 py-0.5 rounded-full whitespace-nowrap"
-                      style={{ background: `${c.dot}15`, color: c.fg }}
-                    >
-                      {STATUS_LABELS[a.status]}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
-          )}
+                  );
+                })}
+              </div>
+            )}
+          </div>
         </div>
 
-        {/* Latest opportunities */}
-        <div className="rounded-xl p-5" style={{ border: '1px solid #e5e7eb', background: '#ffffff' }}>
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="font-semibold text-sm">New opportunities</h2>
-            <Link href="/dashboard/student/opportunities" className="text-xs font-medium hover:underline" style={{ color: '#6b7280' }}>View all →</Link>
+        {/* Latest Opportunities */}
+        <div style={{ backgroundColor: '#ffffff', borderRadius: '16px', border: '1px solid var(--color-line)', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)', overflow: 'hidden' }}>
+          <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--color-line)', backgroundColor: '#f8fafc', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <h2 style={{ margin: 0, fontSize: '16px', fontWeight: '600', color: 'var(--color-ink)' }}>New opportunities</h2>
+            <Link href="/dashboard/student/opportunities" style={{ fontSize: '13px', fontWeight: '500', color: '#1e3a8a', textDecoration: 'none' }}>
+              View all &rarr;
+            </Link>
           </div>
-          {opps.length === 0 ? (
-            <p className="text-sm text-center py-8" style={{ color: '#6b7280' }}>No opportunities available right now.</p>
-          ) : (
-            <div className="space-y-1">
-              {opps.map((o, i) => {
-                const av = avatarColor(o.organization_name);
-                return (
-                  <Link
-                    key={o.id}
-                    href={`/dashboard/student/opportunities/${o.id}`}
-                    className="flex items-center gap-3 py-2.5 group"
-                    style={{ borderTop: i > 0 ? '1px solid #f3f4f6' : 'none' }}
-                  >
-                    <div
-                      className="w-9 h-9 rounded-full flex items-center justify-center shrink-0 text-xs font-bold uppercase"
-                      style={{ background: av.bg, color: av.fg }}
+          <div>
+            {opps.length === 0 ? (
+              <div style={{ padding: '48px 24px', textAlign: 'center' }}>
+                <p style={{ color: 'var(--color-muted)' }}>No opportunities available right now.</p>
+              </div>
+            ) : (
+              <div>
+                {opps.map((o, i) => {
+                  return (
+                    <Link
+                      key={o.id}
+                      href={`/dashboard/student/opportunities/${o.id}`}
+                      style={{ padding: '16px 24px', display: 'flex', alignItems: 'center', gap: '16px', textDecoration: 'none', borderTop: i !== 0 ? '1px solid var(--color-line)' : 'none' }}
                     >
-                      {(o.organization_name || '?')[0]}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium group-hover:underline truncate">{o.title}</p>
-                      <p className="text-xs truncate" style={{ color: '#6b7280' }}>{o.organization_name} · {o.location || 'Remote'}</p>
-                    </div>
-                  </Link>
-                );
-              })}
-            </div>
-          )}
+                      <div style={{ width: '40px', height: '40px', borderRadius: '10px', backgroundColor: '#f1f5f9', color: '#1e3a8a', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', fontWeight: '700', border: '1px solid var(--color-line)', flexShrink: 0 }}>
+                        {(o.organization_name || '?')[0].toUpperCase()}
+                      </div>
+                      <div style={{ minWidth: 0 }}>
+                        <p style={{ margin: '0 0 4px 0', fontSize: '14px', fontWeight: '600', color: 'var(--color-ink)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{o.title}</p>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: 'var(--color-muted)' }}>
+                          <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{o.organization_name}</span>
+                          <span style={{ width: '4px', height: '4px', borderRadius: '50%', backgroundColor: 'var(--color-line)' }}></span>
+                          <span style={{ whiteSpace: 'nowrap' }}>{o.location || 'Remote'}</span>
+                        </div>
+                      </div>
+                    </Link>
+                  );
+                })}
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>

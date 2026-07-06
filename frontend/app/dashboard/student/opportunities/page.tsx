@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { apiFetch } from '@/lib/api';
 
 const CATEGORY_COLORS = {
-  job: { bg: '#eff6ff', fg: '#1d4ed8', border: '#bfdbfe' },
+  job: { bg: '#eff6ff', fg: '#1e3a8a', border: '#bfdbfe' }, // Navy theme
   internship: { bg: '#faf5ff', fg: '#7e22ce', border: '#e9d5ff' },
   scholarship: { bg: '#fffbeb', fg: '#92400e', border: '#fde68a' },
 };
@@ -41,6 +41,7 @@ const CATEGORY_ICONS = {
 export default function StudentOpportunities() {
   const [opps, setOpps] = useState([]);
   const [appliedIds, setAppliedIds] = useState(new Set());
+  const [savedIds, setSavedIds] = useState<Set<number>>(new Set());
   const [error, setError] = useState('');
   const [search, setSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
@@ -64,6 +65,12 @@ export default function StudentOpportunities() {
       const appsData = await appsRes.json();
       if (appsRes.ok && Array.isArray(appsData)) {
         setAppliedIds(new Set(appsData.map((a) => a.opportunity_id).filter(Boolean)));
+      }
+
+      const savedRes = await apiFetch('/api/student/saved');
+      const savedData = await savedRes.json();
+      if (savedRes.ok && Array.isArray(savedData)) {
+        setSavedIds(new Set(savedData.map((s: any) => s.id)));
       }
     } catch (err) {
       setError(err.message);
@@ -100,19 +107,33 @@ export default function StudentOpportunities() {
     }
   };
 
+  const toggleSave = async (opportunityId: number) => {
+    const res = await apiFetch('/api/student/saved', { method: 'POST', body: JSON.stringify({ opportunityId }) });
+    const data = await res.json();
+    setSavedIds((prev) => {
+      const next = new Set(prev);
+      data.saved ? next.add(opportunityId) : next.delete(opportunityId);
+      return next;
+    });
+  };
+
   return (
-    <div className="max-w-2xl">
-      <div className="mb-8">
-        <h1 className="font-display text-2xl font-bold mb-1">Opportunities</h1>
-        <p className="text-sm" style={{ color: '#6b7280' }}>Browse jobs, internships, and scholarships open right now.</p>
+    <div style={{ maxWidth: '900px' }}>
+      <div style={{ marginBottom: '32px' }}>
+        <h1 style={{ fontSize: '28px', fontWeight: '700', color: 'var(--color-ink)', margin: '0 0 8px 0' }}>Opportunities</h1>
+        <p style={{ margin: 0, color: 'var(--color-muted)' }}>Browse jobs, internships, and scholarships open right now.</p>
       </div>
 
-      {/* Search + filter toolbar */}
-      <div className="rounded-xl p-3 mb-6 flex flex-col sm:flex-row gap-2" style={{ border: '1px solid #e5e7eb', background: '#ffffff' }}>
-        <div style={{ position: 'relative', flex: 1 }}>
+      {/* Sleek Search + Filter Toolbar */}
+      <div style={{ 
+        display: 'flex', gap: '12px', flexWrap: 'wrap', backgroundColor: '#ffffff', 
+        padding: '16px', borderRadius: '16px', border: '1px solid var(--color-line)', 
+        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)', marginBottom: '32px' 
+      }}>
+        <div style={{ position: 'relative', flex: '1 1 300px' }}>
           <svg
-            style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}
-            width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+            style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}
+            width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
           >
             <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" />
           </svg>
@@ -121,112 +142,147 @@ export default function StudentOpportunities() {
             placeholder="Search by title, organisation, location…"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            style={{ paddingLeft: 34 }}
-            className="w-full pr-3 py-2 rounded-lg text-sm focus:outline-none"
+            style={{ 
+              width: '100%', padding: '12px 16px 12px 42px', borderRadius: '10px', 
+              border: '1px solid var(--color-line)', backgroundColor: '#f8fafc', 
+              fontSize: '14px', outline: 'none', transition: 'border-color 0.2s' 
+            }}
+            onFocus={(e) => e.target.style.borderColor = '#1e3a8a'}
+            onBlur={(e) => e.target.style.borderColor = 'var(--color-line)'}
           />
         </div>
+        
         <select
           value={categoryFilter}
           onChange={(e) => setCategoryFilter(e.target.value)}
-          className="rounded-lg px-3 py-2 text-sm focus:outline-none"
-          style={{ background: '#fafafa', border: 'none' }}
+          style={{ 
+            padding: '12px 16px', borderRadius: '10px', border: '1px solid var(--color-line)', 
+            backgroundColor: '#f8fafc', fontSize: '14px', outline: 'none', cursor: 'pointer', flex: '1 1 150px' 
+          }}
         >
           <option value="all">All categories</option>
           <option value="job">Job</option>
           <option value="internship">Internship</option>
           <option value="scholarship">Scholarship</option>
         </select>
+        
         <input
           type="text"
           placeholder="Location…"
           value={locationFilter}
           onChange={(e) => setLocationFilter(e.target.value)}
-          className="rounded-lg px-3 py-2 text-sm focus:outline-none sm:w-40"
-          style={{ background: '#fafafa', border: 'none' }}
+          style={{ 
+            padding: '12px 16px', borderRadius: '10px', border: '1px solid var(--color-line)', 
+            backgroundColor: '#f8fafc', fontSize: '14px', outline: 'none', flex: '1 1 150px' 
+          }}
         />
       </div>
 
       {error && (
-        <div className="rounded-lg text-sm px-4 py-3 mb-6" style={{ border: '1px solid #fecaca', background: '#fef2f2', color: '#b91c1c' }}>
+        <div style={{ padding: '16px', borderRadius: '12px', border: '1px solid #fecaca', backgroundColor: '#fef2f2', color: '#b91c1c', marginBottom: '24px', fontSize: '14px' }}>
           {error}
         </div>
       )}
 
       {!error && filteredOpps.length === 0 && (
-        <div className="flex flex-col items-center justify-center py-16 text-center rounded-xl" style={{ border: '1px dashed #e5e7eb' }}>
-          <div className="w-12 h-12 rounded-full flex items-center justify-center mb-3" style={{ background: '#f3f4f6' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '64px 24px', textAlign: 'center', borderRadius: '16px', border: '2px dashed var(--color-line)' }}>
+          <div style={{ width: '48px', height: '48px', borderRadius: '50%', backgroundColor: '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '16px' }}>
             {CATEGORY_ICONS.default('#9ca3af')}
           </div>
-          <p className="font-medium text-sm">
+          <p style={{ fontWeight: '600', fontSize: '16px', color: 'var(--color-ink)', margin: '0 0 4px 0' }}>
             {opps.length === 0 ? 'No active opportunities right now' : 'No opportunities match your search'}
           </p>
-          <p className="text-xs mt-1" style={{ color: '#6b7280' }}>
+          <p style={{ fontSize: '14px', color: 'var(--color-muted)', margin: 0 }}>
             {opps.length === 0 ? 'Check back soon.' : 'Try adjusting your filters.'}
           </p>
         </div>
       )}
 
-      <div className="space-y-4">
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
         {filteredOpps.map((o) => {
           const detailHref = '/dashboard/student/opportunities/' + o.id;
           const c = CATEGORY_COLORS[o.category] || DEFAULT_CATEGORY;
           const iconFn = CATEGORY_ICONS[o.category] || CATEGORY_ICONS.default;
           const isApplied = appliedIds.has(o.id);
+          const isSaved = savedIds.has(o.id);
           const preview = o.description
-            ? o.description.length > 140
-              ? o.description.slice(0, 140) + '…'
+            ? o.description.length > 180
+              ? o.description.slice(0, 180) + '…'
               : o.description
             : null;
 
           return (
             <div
               key={o.id}
-              className="rounded-xl p-5 flex gap-4 items-start"
-              style={{ border: '1px solid #e5e7eb', background: '#ffffff' }}
+              style={{ 
+                display: 'flex', gap: '20px', padding: '24px', borderRadius: '16px', 
+                backgroundColor: '#ffffff', border: '1px solid var(--color-line)', 
+                boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.02)' 
+              }}
             >
               {/* Category icon badge */}
-              <div
-                className="shrink-0 w-10 h-10 rounded-full flex items-center justify-center"
-                style={{ background: c.bg }}
-              >
+              <div style={{ flexShrink: 0, width: '48px', height: '48px', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: c.bg, border: `1px solid ${c.border}` }}>
                 {iconFn(c.fg)}
               </div>
 
-              <div className="flex-1 min-w-0 flex justify-between items-start gap-4">
-                <div className="min-w-0 flex-1">
-                  <Link href={detailHref}>
-                    <h2 className="font-semibold text-sm hover:underline cursor-pointer">{o.title}</h2>
+              <div style={{ flex: 1, minWidth: 0, display: 'flex', justifyContent: 'space-between', gap: '24px', flexWrap: 'wrap' }}>
+                <div style={{ minWidth: 0, flex: '1 1 300px' }}>
+                  <Link href={detailHref} style={{ textDecoration: 'none' }}>
+                    <h2 style={{ fontSize: '18px', fontWeight: '700', color: 'var(--color-ink)', margin: '0 0 6px 0' }} onMouseOver={(e) => e.target.style.textDecoration = 'underline'} onMouseOut={(e) => e.target.style.textDecoration = 'none'}>
+                      {o.title}
+                    </h2>
                   </Link>
-                  <p className="text-xs mt-1" style={{ color: '#6b7280' }}>
-                    {o.organization_name} <span className="mx-1">·</span> {o.location || 'Location not set'}
+                  <p style={{ fontSize: '14px', color: 'var(--color-muted)', margin: '0 0 12px 0', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span style={{ fontWeight: '500' }}>{o.organization_name}</span>
+                    <span style={{ width: '4px', height: '4px', borderRadius: '50%', backgroundColor: 'var(--color-line)' }}></span>
+                    <span>{o.location || 'Location not set'}</span>
                   </p>
+                  
                   {preview && (
-                    <p className="text-sm mt-2" style={{ color: '#6b7280' }}>{preview}</p>
+                    <p style={{ fontSize: '14px', color: '#475569', lineHeight: '1.6', margin: 0 }}>{preview}</p>
                   )}
+                  
                   {o.deadline && (
-                    <p className="text-xs mt-3 pt-3" style={{ color: '#6b7280', borderTop: '1px solid #f3f4f6' }}>
+                    <p style={{ fontSize: '13px', color: 'var(--color-muted)', margin: '16px 0 0 0', paddingTop: '16px', borderTop: '1px solid var(--color-line)' }}>
                       Deadline: {new Date(o.deadline).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })}
                     </p>
                   )}
                 </div>
 
-                <div className="shrink-0 flex flex-col items-end gap-2">
-                  <span
-                    className="text-xs px-2.5 py-1 rounded-full capitalize whitespace-nowrap font-medium"
-                    style={{ background: c.bg, color: c.fg, border: `1px solid ${c.border}` }}
-                  >
-                    {o.category}
-                  </span>
+                {/* Actions Column */}
+                <div style={{ flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '16px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <span style={{ fontSize: '12px', fontWeight: '600', padding: '4px 12px', borderRadius: '999px', textTransform: 'capitalize', backgroundColor: c.bg, color: c.fg, border: `1px solid ${c.border}` }}>
+                      {o.category}
+                    </span>
+                    <button
+                      onClick={() => toggleSave(o.id)}
+                      style={{ 
+                        width: '32px', height: '32px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', 
+                        backgroundColor: isSaved ? '#f1f5f9' : 'transparent', border: '1px solid var(--color-line)', cursor: 'pointer', transition: 'all 0.2s' 
+                      }}
+                    >
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill={isSaved ? '#1e3a8a' : 'none'} stroke={isSaved ? '#1e3a8a' : 'var(--color-muted)'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
+                      </svg>
+                    </button>
+                  </div>
+                  
                   <button
                     onClick={() => apply(o.id)}
                     disabled={isApplied}
-                    className="px-3 py-1.5 rounded-md text-sm text-white disabled:opacity-40"
-                    style={{ background: '#111827' }}
+                    style={{ 
+                      padding: '10px 20px', borderRadius: '8px', fontSize: '14px', fontWeight: '600', 
+                      backgroundColor: isApplied ? '#e2e8f0' : '#1e3a8a', 
+                      color: isApplied ? '#64748b' : '#ffffff', 
+                      border: 'none', cursor: isApplied ? 'not-allowed' : 'pointer', transition: 'background-color 0.2s'
+                    }}
                   >
-                    {isApplied ? 'Applied' : 'Apply'}
+                    {isApplied ? 'Applied' : 'Apply Now'}
                   </button>
-                  <Link href={detailHref} className="text-xs hover:underline" style={{ color: '#6b7280' }}>
-                    View details
+                  
+                  <Link href={detailHref} style={{ fontSize: '13px', fontWeight: '500', color: '#1e3a8a', textDecoration: 'none' }}>
+                    View details &rarr;
                   </Link>
                 </div>
               </div>

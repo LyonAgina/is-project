@@ -1,106 +1,33 @@
 // @ts-nocheck
 'use client';
-
 import { useState } from 'react';
 import ProfileCard from './ProfileCard';
+import EditModal from './EditModal';
+import { apiFetch } from '@/lib/api';
 
-export default function ExperienceCard({
-  form,
-  setForm,
-  onSave,
-}) {
-  const [editing, setEditing] = useState(false);
+export default function ExperienceCard({ form, setForm, onSave }) {
+  const [open, setOpen] = useState(false);
+  const [years, setYears] = useState(form.experienceYears ?? 0);
 
-  const [years, setYears] = useState(
-    form.experienceYears ?? 0
-  );
-
-  const startEdit = () => {
-    setYears(form.experienceYears ?? 0);
-    setEditing(true);
-  };
-
-  const cancelEdit = () => {
-    setYears(form.experienceYears ?? 0);
-    setEditing(false);
-  };
-
-  const save = async () => {
-    const updated = {
-      ...form,
-      experienceYears: Number(years),
-    };
-
+  const handleSave = async () => {
+    const updated = { ...form, experienceYears: Number(years) };
+    await apiFetch('/api/student/profile', { method: 'PUT', body: JSON.stringify({ experienceYears: updated.experienceYears }) });
     setForm(updated);
-
-    await onSave(updated);
-
-    setEditing(false);
+    setOpen(false);
   };
 
   return (
-    <ProfileCard
-      title="Experience"
-      actions={
-        !editing && (
-          <button
-            onClick={startEdit}
-            className="text-sm border border-[var(--color-line)] px-3 py-1 rounded-md"
-          >
-            Edit
-          </button>
-        )
-      }
-    >
-      {!editing ? (
-        <div>
-          {form.experienceYears > 0 ? (
-            <p>
-              <span className="font-semibold">
-                {form.experienceYears}
-              </span>{' '}
-              {form.experienceYears === 1
-                ? 'year'
-                : 'years'}{' '}
-              of experience
-            </p>
-          ) : (
-            <p className="text-[var(--color-muted)]">
-              No experience added yet.
-            </p>
-          )}
-        </div>
-      ) : (
-        <div className="space-y-4">
-
-          <input
-            type="number"
-            min="0"
-            step="0.5"
-            value={years}
-            onChange={(e) => setYears(e.target.value)}
-            placeholder="Years of experience"
-            className="w-full border border-[var(--color-line)] rounded-md p-2"
-          />
-
-          <div className="flex gap-3">
-            <button
-              onClick={save}
-              className="bg-[var(--color-ink)] text-[var(--color-paper)] px-4 py-2 rounded-md"
-            >
-              Save
-            </button>
-
-            <button
-              onClick={cancelEdit}
-              className="border border-[var(--color-line)] px-4 py-2 rounded-md"
-            >
-              Cancel
-            </button>
-          </div>
-
-        </div>
+    <>
+      <ProfileCard title="Experience" onEdit={() => { setYears(form.experienceYears ?? 0); setOpen(true); }}>
+        <p style={{ fontSize: '15px', fontWeight: '600' }}>
+          {form.experienceYears > 0 ? `${form.experienceYears} Years of Experience` : 'No formal experience added.'}
+        </p>
+      </ProfileCard>
+      {open && (
+        <EditModal title="Edit Experience" onClose={() => setOpen(false)} onSave={handleSave}>
+          <input type="number" value={years} onChange={(e) => setYears(e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #ccc' }} />
+        </EditModal>
       )}
-    </ProfileCard>
+    </>
   );
 }

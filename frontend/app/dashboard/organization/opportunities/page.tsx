@@ -92,6 +92,13 @@ export default function MyOpportunities() {
                 <Link href={applicantsHref} className="text-sm border border-[var(--color-line)] px-3 py-1.5 rounded-md hover:border-[var(--color-ink)] transition-colors">
                   View applicants
                 </Link>
+                <Link
+                  href={`/dashboard/organization/opportunities/${o.id}/compare`}
+                  className="text-sm font-medium px-3 py-1.5 rounded-lg"
+                  style={{ border: '1px solid #e5e7eb', color: '#111827' }}
+                >
+                  Compare applicants
+                </Link>
                 <button onClick={() => remove(o.id)} className="text-sm text-red-600 ml-auto px-2">
                   Delete
                 </button>

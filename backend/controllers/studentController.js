@@ -255,7 +255,47 @@ const uploadAvatar = async (req, res) => {
   }
 };
 
+const toggleSaveOpportunity = async (req, res) => {
+  const { opportunityId } = req.body;
+  try {
+    const [[profile]] = await pool.query('SELECT id FROM student_profiles WHERE user_id = ?', [req.user.id]);
+    const [existing] = await pool.query(
+      'SELECT * FROM saved_opportunities WHERE student_id = ? AND opportunity_id = ?',
+      [profile.id, opportunityId]
+    );
+
+    if (existing.length > 0) {
+      await pool.query('DELETE FROM saved_opportunities WHERE student_id = ? AND opportunity_id = ?', [profile.id, opportunityId]);
+      return res.json({ saved: false });
+    }
+
+    await pool.query('INSERT INTO saved_opportunities (student_id, opportunity_id) VALUES (?, ?)', [profile.id, opportunityId]);
+    res.json({ saved: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to save opportunity' });
+  }
+};
+
+const getSavedOpportunities = async (req, res) => {
+  try {
+    const [rows] = await pool.query(`
+      SELECT o.id, o.title, o.category, o.location, o.deadline, org.name AS organization_name
+      FROM saved_opportunities so
+      JOIN opportunities o ON so.opportunity_id = o.id
+      JOIN organizations org ON o.organization_id = org.id
+      JOIN student_profiles sp ON so.student_id = sp.id
+      WHERE sp.user_id = ?
+      ORDER BY so.saved_at DESC
+    `, [req.user.id]);
+    res.json(rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to fetch saved opportunities' });
+  }
+};
+
 module.exports = {
   getProfile, updateProfile, browseOpportunities, applyToOpportunity,
-  getMyApplications, getNotifications, markNotificationRead, uploadCv, uploadAvatar, getOpportunityById,
+  getMyApplications, getNotifications, markNotificationRead, uploadCv, uploadAvatar, getOpportunityById,getSavedOpportunities, toggleSaveOpportunity
 };

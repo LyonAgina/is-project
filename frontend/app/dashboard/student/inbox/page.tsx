@@ -50,13 +50,13 @@ const ICONS = {
 };
 
 const TYPE_CONFIG = {
-  match: { label: 'New match', bg: '#eff6ff', fg: '#1d4ed8' },
-  application: { label: 'Application update', bg: '#faf5ff', fg: '#7e22ce' },
-  org_message: { label: 'Message', bg: '#f0fdf4', fg: '#15803d' },
-  admin: { label: 'System', bg: '#f3f4f6', fg: '#4b5563' },
+  match: { label: 'New match', bg: '#eff6ff', fg: '#1e3a8a', border: '#bfdbfe' }, 
+  application: { label: 'Application update', bg: '#faf5ff', fg: '#7e22ce', border: '#e9d5ff' },
+  org_message: { label: 'Message', bg: '#f0fdf4', fg: '#15803d', border: '#bbf7d0' },
+  admin: { label: 'System', bg: '#f8fafc', fg: '#475569', border: '#e2e8f0' },
 };
 
-const DEFAULT_TYPE = { label: 'Notification', bg: '#f3f4f6', fg: '#4b5563' };
+const DEFAULT_TYPE = { label: 'Notification', bg: '#f8fafc', fg: '#475569', border: '#e2e8f0' };
 
 export default function StudentInbox() {
   const [notes, setNotes] = useState([]);
@@ -86,22 +86,32 @@ export default function StudentInbox() {
   const unreadCount = notes.filter((n) => !n.is_read).length;
 
   return (
-    <div className="max-w-2xl">
+    <div style={{ maxWidth: '900px' }}>
+      
       {/* Header */}
-      <div className="flex items-center justify-between mb-8">
-        <div className="flex items-center gap-3">
-          <h1 className="font-display text-2xl font-bold">Inbox</h1>
-          {unreadCount > 0 && (
-            <span className="text-xs font-semibold text-white px-2 py-0.5 rounded-full" style={{ background: '#dc2626' }}>
-              {unreadCount}
-            </span>
-          )}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '16px', marginBottom: '32px' }}>
+        <div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <h1 style={{ fontSize: '28px', fontWeight: '700', color: 'var(--color-ink)', margin: '0 0 8px 0' }}>Inbox</h1>
+            {unreadCount > 0 && (
+              <span style={{ backgroundColor: '#ef4444', color: '#ffffff', fontSize: '13px', fontWeight: '700', padding: '2px 10px', borderRadius: '999px', display: 'inline-block', marginBottom: '8px' }}>
+                {unreadCount} New
+              </span>
+            )}
+          </div>
+          <p style={{ margin: 0, color: 'var(--color-muted)' }}>Stay updated on your matches and applications.</p>
         </div>
+
         {unreadCount > 0 && (
           <button
             onClick={markAllRead}
-            className="text-sm transition-colors"
-            style={{ color: '#6b7280' }}
+            style={{ 
+              padding: '8px 16px', borderRadius: '8px', fontSize: '14px', fontWeight: '600', 
+              backgroundColor: '#ffffff', color: '#1e3a8a', border: '1px solid var(--color-line)', 
+              cursor: 'pointer', transition: 'all 0.2s', boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
+            }}
+            onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#f8fafc'}
+            onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#ffffff'}
           >
             Mark all as read
           </button>
@@ -110,17 +120,17 @@ export default function StudentInbox() {
 
       {/* Empty state */}
       {notes.length === 0 && (
-        <div className="flex flex-col items-center justify-center py-16 text-center rounded-xl" style={{ border: '1px dashed #e5e7eb' }}>
-          <div className="w-12 h-12 rounded-full flex items-center justify-center mb-3" style={{ background: '#f3f4f6' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '64px 24px', textAlign: 'center', borderRadius: '16px', border: '2px dashed var(--color-line)' }}>
+          <div style={{ width: '48px', height: '48px', borderRadius: '50%', backgroundColor: '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '16px' }}>
             {ICONS.default('#9ca3af')}
           </div>
-          <p className="font-medium text-sm">No notifications yet</p>
-          <p className="text-xs mt-1" style={{ color: '#6b7280' }}>You'll be notified when something needs your attention.</p>
+          <p style={{ fontWeight: '600', fontSize: '16px', color: 'var(--color-ink)', margin: '0 0 4px 0' }}>No notifications yet</p>
+          <p style={{ fontSize: '14px', color: 'var(--color-muted)', margin: 0 }}>You'll be notified when something needs your attention.</p>
         </div>
       )}
 
       {/* Notification list */}
-      <div className="space-y-4">
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
         {notes.map((n) => {
           const isUnread = !n.is_read;
           const typeInfo = TYPE_CONFIG[n.type] || DEFAULT_TYPE;
@@ -130,52 +140,60 @@ export default function StudentInbox() {
           return (
             <div
               key={n.id}
-              className="rounded-xl p-5 flex gap-4 items-start"
-              style={{ border: '1px solid #e5e7eb', background: '#ffffff' }}
+              style={{ 
+                display: 'flex', gap: '20px', padding: '24px', borderRadius: '16px', 
+                backgroundColor: isUnread ? '#f8fafc' : '#ffffff', 
+                border: '1px solid var(--color-line)', 
+                boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.02)',
+                position: 'relative',
+                overflow: 'hidden',
+                transition: 'background-color 0.3s ease'
+              }}
             >
+              {/* Unread Left Border Highlight */}
+              {isUnread && (
+                <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: '4px', backgroundColor: '#1e3a8a' }} />
+              )}
+
               {/* Type icon badge */}
-              <div
-                className="shrink-0 w-10 h-10 rounded-full flex items-center justify-center"
-                style={{ background: typeInfo.bg }}
-              >
+              <div style={{ flexShrink: 0, width: '48px', height: '48px', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: typeInfo.bg, border: `1px solid ${typeInfo.border}` }}>
                 {iconFn(typeInfo.fg)}
               </div>
 
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-2 flex-wrap">
-                  <span
-                    className="text-[11px] font-medium px-2.5 py-1 rounded-full"
-                    style={{ background: typeInfo.bg, color: typeInfo.fg }}
-                  >
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px', flexWrap: 'wrap' }}>
+                  <span style={{ fontSize: '12px', fontWeight: '600', padding: '4px 12px', borderRadius: '999px', backgroundColor: typeInfo.bg, color: typeInfo.fg, border: `1px solid ${typeInfo.border}` }}>
                     {typeInfo.label}
                   </span>
+                  
                   {senderLabel && (
-                    <span className="text-xs font-medium" style={{ color: '#111827' }}>{senderLabel}</span>
-                  )}
-                  {isUnread && (
-                    <span className="w-1.5 h-1.5 rounded-full" style={{ background: '#111827' }} />
+                    <span style={{ fontSize: '13px', fontWeight: '600', color: 'var(--color-ink)' }}>{senderLabel}</span>
                   )}
                 </div>
 
-                <p className="text-sm leading-relaxed" style={{ color: isUnread ? '#111827' : '#6b7280', fontWeight: isUnread ? 500 : 400 }}>
+                <p style={{ margin: '0 0 16px 0', fontSize: '15px', lineHeight: '1.6', color: isUnread ? 'var(--color-ink)' : '#475569', fontWeight: isUnread ? '600' : '400' }}>
                   {n.message}
                 </p>
-                <div className="flex items-center gap-3 mt-2">
-                  <p className="text-xs" style={{ color: '#9ca3af' }}>{relativeTime(n.sent_at)}</p>
-                  <span style={{ color: '#d1d5db' }}>·</span>
+                
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', paddingTop: '16px', borderTop: '1px solid var(--color-line)' }}>
+                  <p style={{ margin: 0, fontSize: '13px', color: '#64748b', fontWeight: '500' }}>{relativeTime(n.sent_at)}</p>
+                  <span style={{ width: '4px', height: '4px', borderRadius: '50%', backgroundColor: 'var(--color-line)' }}></span>
+                  
                   {isUnread ? (
                     <button
                       onClick={() => markRead(n.id)}
-                      className="text-xs font-medium hover:underline"
-                      style={{ color: '#6b7280' }}
+                      style={{ background: 'none', border: 'none', padding: 0, fontSize: '13px', fontWeight: '600', color: '#1e3a8a', cursor: 'pointer' }}
+                      onMouseOver={(e) => e.target.style.textDecoration = 'underline'}
+                      onMouseOut={(e) => e.target.style.textDecoration = 'none'}
                     >
                       Mark as read
                     </button>
                   ) : (
                     <button
                       onClick={() => markUnread(n.id)}
-                      className="text-xs font-medium hover:underline"
-                      style={{ color: '#6b7280' }}
+                      style={{ background: 'none', border: 'none', padding: 0, fontSize: '13px', fontWeight: '500', color: '#64748b', cursor: 'pointer' }}
+                      onMouseOver={(e) => e.target.style.textDecoration = 'underline'}
+                      onMouseOut={(e) => e.target.style.textDecoration = 'none'}
                     >
                       Mark as unread
                     </button>

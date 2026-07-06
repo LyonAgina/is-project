@@ -9,9 +9,12 @@ const links = [
   { href: '/dashboard/student', label: 'Home' },
   { href: '/dashboard/student/opportunities', label: 'Opportunities' },
   { href: '/dashboard/student/recommendations', label: 'Recommendations' },
+  { href: '/dashboard/student/saved', label: 'Saved' },
   { href: '/dashboard/student/applications', label: 'Applications' },
   { href: '/dashboard/student/inbox', label: 'Inbox' },
 ];
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 export default function StudentLayout({ children }) {
   const router = useRouter();
@@ -19,6 +22,7 @@ export default function StudentLayout({ children }) {
   const [ready, setReady] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const [name, setName] = useState('');
+  const [avatarUrl, setAvatarUrl] = useState('');
 
   useEffect(() => {
     const role = localStorage.getItem('role');
@@ -28,7 +32,10 @@ export default function StudentLayout({ children }) {
     }
     setReady(true);
     fetchUnread();
-    apiFetch('/api/student/profile').then(r => r.json()).then(d => setName(d.full_name || '')).catch(() => {});
+    apiFetch('/api/student/profile').then(r => r.json()).then(d => {
+      setName(d.full_name || '');
+      setAvatarUrl(d.profile_picture_url || '');
+    }).catch(() => {});
     const interval = setInterval(fetchUnread, 60_000);
     return () => clearInterval(interval);
   }, []);
@@ -48,12 +55,28 @@ export default function StudentLayout({ children }) {
 
   if (!ready) return null;
 
+  const initials = (name || '?').split(' ').map((p) => p[0]).slice(0, 2).join('').toUpperCase();
+
   return (
-    <div className="min-h-screen flex bg-[var(--color-paper)]">
+    <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: 'var(--color-paper)', color: 'var(--color-ink)', fontFamily: 'inherit' }}>
+      
       {/* Sidebar */}
-      <aside className="w-56 bg-white border-r border-[var(--color-line)] p-5 flex flex-col">
-        <span className="font-display text-base font-bold mb-8 px-2 text-[var(--color-ink)]">Opportunity Hub</span>
-        <nav className="flex flex-col gap-0.5 flex-1">
+      <aside style={{ width: '260px', backgroundColor: '#ffffff', borderRight: '1px solid var(--color-line)', padding: '24px', display: 'flex', flexDirection: 'column', position: 'fixed', top: 0, bottom: 0, left: 0, zIndex: 20 }}>
+        
+        {/* Logo Section */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '40px' }}>
+          <div style={{ backgroundColor: '#1e3a8a', width: '36px', height: '36px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 4px rgba(30, 58, 138, 0.2)' }}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: '20px', height: '20px' }}>
+              <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+              <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+              <line x1="12" y1="22.08" x2="12" y2="12"></line>
+            </svg>
+          </div>
+          <span style={{ fontSize: '18px', fontWeight: '700', color: 'var(--color-ink)' }}>Opportunity Hub</span>
+        </div>
+        
+        {/* Navigation */}
+        <nav style={{ display: 'flex', flexDirection: 'column', gap: '8px', flex: 1 }}>
           {links.map((l) => {
             const isInbox = l.href === '/dashboard/student/inbox';
             const active = pathname === l.href || (l.href !== '/dashboard/student' && pathname.startsWith(l.href));
@@ -61,15 +84,23 @@ export default function StudentLayout({ children }) {
               <Link
                 key={l.href}
                 href={l.href}
-                className={`text-sm px-3 py-2 rounded-lg flex items-center justify-between transition-colors ${
-                  active
-                    ? 'bg-[var(--color-ink)] text-white font-medium'
-                    : 'text-[var(--color-muted)] hover:bg-[var(--color-paper)] hover:text-[var(--color-ink)]'
-                }`}
+                style={{
+                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                  padding: '12px 16px', borderRadius: '12px', fontSize: '14px', textDecoration: 'none',
+                  backgroundColor: active ? '#1e3a8a' : 'transparent',
+                  color: active ? '#ffffff' : 'var(--color-muted)',
+                  fontWeight: active ? '600' : '500',
+                  boxShadow: active ? '0 4px 6px -1px rgba(30, 58, 138, 0.2)' : 'none',
+                  transition: 'all 0.2s ease'
+                }}
               >
                 <span>{l.label}</span>
                 {isInbox && unreadCount > 0 && (
-                  <span className={`text-xs font-bold px-1.5 py-0.5 rounded-full min-w-[20px] text-center ${active ? 'bg-white text-[var(--color-ink)]' : 'bg-[var(--color-ink)] text-white'}`}>
+                  <span style={{
+                    backgroundColor: active ? '#3b82f6' : '#1e3a8a',
+                    color: '#ffffff', fontSize: '12px', fontWeight: '700',
+                    padding: '2px 8px', borderRadius: '999px', minWidth: '24px', textAlign: 'center'
+                  }}>
                     {unreadCount > 99 ? '99+' : unreadCount}
                   </span>
                 )}
@@ -79,52 +110,59 @@ export default function StudentLayout({ children }) {
         </nav>
       </aside>
 
-      {/* Main */}
-      <div className="flex-1 flex flex-col min-w-0">
-        {/* Header */}
-        <header className="bg-white border-b border-[var(--color-line)] px-8 py-3 flex items-center justify-between">
-          <span className="text-sm text-[var(--color-muted)]">
-            {name ? `Hello, ${name.split(' ')[0]}` : 'Student dashboard'}
-          </span>
-          <div className="flex items-center gap-4">
-            {/* Notification bell */}
-            <Link href="/dashboard/student/inbox" className="relative">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-[var(--color-muted)] hover:text-[var(--color-ink)] transition-colors">
-                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
-                <path d="M13.73 21a2 2 0 0 1-3.46 0" />
-              </svg>
-              {unreadCount > 0 && (
-                <span className="absolute -top-1.5 -right-1.5 text-[10px] font-bold bg-red-500 text-white rounded-full w-4 h-4 flex items-center justify-center">
-                  {unreadCount > 9 ? '9+' : unreadCount}
-                </span>
+      {/* Main Content Area */}
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', marginLeft: '260px', minWidth: 0 }}>
+        
+        {/* Sticky Header */}
+        <header style={{ 
+          position: 'sticky', top: 0, zIndex: 10, backgroundColor: 'rgba(243, 245, 247, 0.9)', 
+          backdropFilter: 'blur(8px)', borderBottom: '1px solid var(--color-line)', 
+          padding: '16px 32px', display: 'flex', alignItems: 'center', justifyContent: 'flex-end' 
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
+            
+            {/* Profile Avatar */}
+            <Link href="/dashboard/student/profile" style={{ display: 'block', textDecoration: 'none' }}>
+              {avatarUrl ? (
+                <img
+                  src={API_URL + avatarUrl}
+                  alt={name || 'Profile'}
+                  style={{ width: '44px', height: '44px', borderRadius: '999px', objectFit: 'cover', border: '2px solid #ffffff', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}
+                />
+              ) : (
+                <div style={{ 
+                  width: '44px', height: '44px', borderRadius: '999px', backgroundColor: '#ffffff', 
+                  color: '#1e3a8a', display: 'flex', alignItems: 'center', justifyContent: 'center', 
+                  fontSize: '14px', fontWeight: '700', border: '1px solid var(--color-line)', boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
+                }}>
+                  {initials}
+                </div>
               )}
             </Link>
-            {/* Profile */}
-            <Link
-              href="/dashboard/student/profile"
-              className={`text-sm px-3 py-1.5 rounded-lg border transition-colors ${
-                pathname.startsWith('/dashboard/student/profile')
-                  ? 'bg-[var(--color-ink)] text-white border-[var(--color-ink)]'
-                  : 'border-[var(--color-line)] text-[var(--color-muted)] hover:text-[var(--color-ink)]'
-              }`}
-            >
-              Profile
-            </Link>
+            
+            <div style={{ height: '24px', width: '1px', backgroundColor: 'var(--color-line)' }}></div>
+            
             {/* Logout */}
             <button
               onClick={logout}
-              className="text-sm text-[var(--color-muted)] hover:text-red-600 transition-colors"
+              style={{ 
+                background: 'none', border: 'none', padding: 0, cursor: 'pointer', 
+                fontSize: '14px', fontWeight: '500', color: 'var(--color-muted)' 
+              }}
+              onMouseOver={(e) => e.target.style.color = '#dc2626'}
+              onMouseOut={(e) => e.target.style.color = 'var(--color-muted)'}
             >
               Log out
             </button>
           </div>
         </header>
 
-        <main className="flex-1 p-8">{children}</main>
-
-        <footer className="bg-white border-t border-[var(--color-line)] px-8 py-3 text-xs text-[var(--color-muted)]">
-          Find opportunities that fit
-        </footer>
+        {/* Constrained Main Canvas */}
+        <main style={{ flex: 1, padding: '32px', overflowY: 'auto' }}>
+          <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
+            {children}
+          </div>
+        </main>
       </div>
     </div>
   );

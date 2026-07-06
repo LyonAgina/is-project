@@ -63,143 +63,167 @@ export default function OpportunityDetail() {
     }
   };
 
-  if (error && !opp) return <p className="text-red-600">{error}</p>;
-  if (!opp) return <p className="text-[var(--color-muted)]">Loading…</p>;
+  if (error && !opp) return <p style={{ color: '#dc2626', padding: '24px' }}>{error}</p>;
+  if (!opp) return <p style={{ color: 'var(--color-muted)', padding: '24px' }}>Loading opportunity details…</p>;
 
   const skills = (opp.tags || []).filter((t) => t.type === 'skill');
   const interests = (opp.tags || []).filter((t) => t.type === 'interest');
 
   return (
-    <div className="max-w-2xl">
-      <Link href="/dashboard/student/opportunities" className="text-sm text-[var(--color-muted)] underline">&larr; Back to opportunities</Link>
+    <div style={{ maxWidth: '800px', margin: '0 auto', paddingBottom: '64px' }}>
+      
+      {/* Back Navigation */}
+      <Link 
+        href="/dashboard/student/opportunities" 
+        style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', fontSize: '14px', fontWeight: '500', color: '#1e3a8a', textDecoration: 'none', marginBottom: '24px' }}
+      >
+        <span>&larr;</span> Back to opportunities
+      </Link>
 
-      <h1 className="font-display text-2xl font-bold mt-4 mb-1">{opp.title}</h1>
-      <p className="text-[var(--color-muted)] mb-6">{opp.organization_name} · {opp.category} · {opp.location || 'Location not set'}</p>
-
-      {opp.description && (
-        <div className="mb-6">
-          <h2 className="font-semibold mb-2">Description</h2>
-          <p className="text-sm">{opp.description}</p>
+      {/* Header Card */}
+      <div style={{ backgroundColor: '#ffffff', padding: '32px', borderRadius: '16px', border: '1px solid var(--color-line)', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)', marginBottom: '32px' }}>
+        <h1 style={{ fontSize: '32px', fontWeight: '800', color: 'var(--color-ink)', margin: '0 0 12px 0', lineHeight: '1.2' }}>{opp.title}</h1>
+        
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap', marginBottom: '24px' }}>
+          <span style={{ fontSize: '16px', fontWeight: '600', color: 'var(--color-ink)' }}>{opp.organization_name}</span>
+          <span style={{ width: '4px', height: '4px', borderRadius: '50%', backgroundColor: 'var(--color-line)' }}></span>
+          <span style={{ fontSize: '14px', color: 'var(--color-muted)', textTransform: 'capitalize' }}>{opp.category}</span>
+          <span style={{ width: '4px', height: '4px', borderRadius: '50%', backgroundColor: 'var(--color-line)' }}></span>
+          <span style={{ fontSize: '14px', color: 'var(--color-muted)' }}>{opp.location || 'Location not set'}</span>
         </div>
-      )}
 
-      <div className="mb-6">
-        <h2 className="font-semibold mb-2">Requirements</h2>
-        <ul className="text-sm space-y-1 text-[var(--color-muted)]">
-          <li>Minimum education: {opp.min_education ? opp.min_education : 'Not specified'}</li>
-          <li>Minimum grade: {opp.min_academic_grade ? GRADE_LABEL[opp.min_academic_grade] : 'Not specified'}</li>
-          <li>Minimum experience: {opp.min_experience > 0 ? opp.min_experience + ' years' : 'Not specified'}</li>
-          {opp.deadline && <li>Deadline: {new Date(opp.deadline).toLocaleDateString()}</li>}
-        </ul>
+        {/* Action Area */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px', paddingTop: '24px', borderTop: '1px solid var(--color-line)' }}>
+          {applied ? (
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', fontSize: '14px', fontWeight: '600', color: '#065f46', backgroundColor: '#d1fae5', padding: '12px 24px', borderRadius: '999px' }}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+              Application submitted
+            </div>
+          ) : (
+            <button
+              onClick={() => setShowForm(true)}
+              disabled={!hasCv}
+              style={{ 
+                backgroundColor: hasCv ? '#1e3a8a' : '#e2e8f0', color: hasCv ? '#ffffff' : '#64748b', 
+                padding: '12px 32px', borderRadius: '8px', fontSize: '15px', fontWeight: '600', border: 'none', 
+                cursor: hasCv ? 'pointer' : 'not-allowed', transition: 'background-color 0.2s', boxShadow: hasCv ? '0 4px 6px -1px rgba(30, 58, 138, 0.2)' : 'none'
+              }}
+            >
+              Apply for this opportunity
+            </button>
+          )}
+
+          {!hasCv && !applied && (
+            <div style={{ fontSize: '13px', color: '#b45309', backgroundColor: '#fffbeb', padding: '10px 16px', borderRadius: '8px', border: '1px solid #fde68a' }}>
+              Upload your CV on your <Link href="/dashboard/student/profile" style={{ fontWeight: '600', color: '#b45309', textDecoration: 'underline' }}>profile</Link> before applying.
+            </div>
+          )}
+        </div>
       </div>
 
-      {skills.length > 0 && (
-        <div className="mb-6">
-          <h2 className="font-semibold mb-2">Skills required</h2>
-          <div className="flex flex-wrap gap-2">
-            {skills.map((s) => (
-              <span key={s.id} className="text-xs px-2 py-1 rounded-full border border-[var(--color-line)]">{s.name}</span>
-            ))}
+      {/* Details Content */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
+        
+        {opp.description && (
+          <div>
+            <h2 style={{ fontSize: '18px', fontWeight: '700', color: 'var(--color-ink)', marginBottom: '16px' }}>Description</h2>
+            <p style={{ fontSize: '15px', color: '#475569', lineHeight: '1.7', margin: 0, whiteSpace: 'pre-wrap' }}>
+              {opp.description}
+            </p>
           </div>
-        </div>
-      )}
+        )}
 
-      {interests.length > 0 && (
-        <div className="mb-6">
-          <h2 className="font-semibold mb-2">Interests valued</h2>
-          <div className="flex flex-wrap gap-2">
-            {interests.map((s) => (
-              <span key={s.id} className="text-xs px-2 py-1 rounded-full border border-[var(--color-line)]">{s.name}</span>
-            ))}
-          </div>
+        <div style={{ backgroundColor: '#ffffff', padding: '24px', borderRadius: '16px', border: '1px solid var(--color-line)' }}>
+          <h2 style={{ fontSize: '18px', fontWeight: '700', color: 'var(--color-ink)', marginBottom: '16px' }}>Requirements</h2>
+          <ul style={{ margin: 0, padding: '0 0 0 20px', fontSize: '15px', color: '#475569', lineHeight: '2', listStyleType: 'disc' }}>
+            <li><strong style={{ color: 'var(--color-ink)' }}>Education:</strong> {opp.min_education ? opp.min_education : 'Not specified'}</li>
+            <li><strong style={{ color: 'var(--color-ink)' }}>Academic Grade:</strong> {opp.min_academic_grade ? GRADE_LABEL[opp.min_academic_grade] : 'Not specified'}</li>
+            <li><strong style={{ color: 'var(--color-ink)' }}>Experience:</strong> {opp.min_experience > 0 ? opp.min_experience + ' years' : 'Not specified'}</li>
+            {opp.deadline && <li><strong style={{ color: 'var(--color-ink)' }}>Deadline:</strong> {new Date(opp.deadline).toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</li>}
+          </ul>
         </div>
-      )}
 
-      {!hasCv && (
-        <div className="border border-[var(--color-accent)] bg-amber-50 text-amber-800 text-sm rounded-md p-3 mb-4">
-          Upload your CV before applying. <Link href="/dashboard/student/profile" className="underline font-medium">Go to your profile</Link>.
-        </div>
-      )}
-
-      {/* Apply / Applied state */}
-      {applied ? (
-        <div className="inline-flex items-center gap-2 text-sm font-medium text-green-700 bg-green-50 border border-green-200 px-4 py-2 rounded-full">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            <polyline points="20 6 9 17 4 12" />
-          </svg>
-          Application submitted
-        </div>
-      ) : (
-        <button
-          onClick={() => setShowForm(true)}
-          disabled={!hasCv}
-          className="bg-[var(--color-ink)] text-white px-5 py-2.5 rounded-lg font-medium text-sm disabled:opacity-40 hover:opacity-90 transition-opacity"
-        >
-          Apply for this opportunity
-        </button>
-      )}
-
-      {/* ── Apply modal ── */}
-      {showForm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowForm(false)} />
-          <div className="relative bg-[var(--color-surface)] border border-[var(--color-line)] rounded-2xl w-full max-w-lg shadow-2xl">
-            {/* Header */}
-            <div className="flex items-start justify-between px-6 py-5 border-b border-[var(--color-line)]">
+        {(skills.length > 0 || interests.length > 0) && (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '24px' }}>
+            {skills.length > 0 && (
               <div>
-                <h2 className="font-semibold text-base">Apply for this opportunity</h2>
-                <p className="text-sm text-[var(--color-muted)] mt-0.5">{opp.title} · {opp.organization_name}</p>
+                <h2 style={{ fontSize: '16px', fontWeight: '700', color: 'var(--color-ink)', marginBottom: '12px' }}>Required Skills</h2>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                  {skills.map((s) => (
+                    <span key={s.id} style={{ fontSize: '13px', fontWeight: '500', padding: '6px 12px', borderRadius: '999px', backgroundColor: '#f1f5f9', color: '#334155', border: '1px solid var(--color-line)' }}>
+                      {s.name}
+                    </span>
+                  ))}
+                </div>
               </div>
-              <button
-                onClick={() => setShowForm(false)}
-                className="text-[var(--color-muted)] hover:text-[var(--color-ink)] w-7 h-7 flex items-center justify-center rounded-lg hover:bg-[var(--color-line)] transition-colors ml-4 shrink-0"
-              >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-                  <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+            )}
+
+            {interests.length > 0 && (
+              <div>
+                <h2 style={{ fontSize: '16px', fontWeight: '700', color: 'var(--color-ink)', marginBottom: '12px' }}>Valued Interests</h2>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                  {interests.map((s) => (
+                    <span key={s.id} style={{ fontSize: '13px', fontWeight: '500', padding: '6px 12px', borderRadius: '999px', backgroundColor: '#f1f5f9', color: '#334155', border: '1px solid var(--color-line)' }}>
+                      {s.name}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* ── Apply Modal ── */}
+      {showForm && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' }}>
+          <div style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(15, 23, 42, 0.6)', backdropFilter: 'blur(4px)' }} onClick={() => setShowForm(false)} />
+          <div style={{ position: 'relative', backgroundColor: '#ffffff', border: '1px solid var(--color-line)', borderRadius: '16px', width: '100%', maxWidth: '500px', boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)' }}>
+            
+            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', padding: '24px', borderBottom: '1px solid var(--color-line)' }}>
+              <div>
+                <h2 style={{ margin: '0 0 4px 0', fontSize: '18px', fontWeight: '700', color: 'var(--color-ink)' }}>Submit Application</h2>
+                <p style={{ margin: 0, fontSize: '14px', color: 'var(--color-muted)' }}>{opp.title} · {opp.organization_name}</p>
+              </div>
+              <button onClick={() => setShowForm(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-muted)', padding: '4px' }}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                  <path d="M18 6L6 18M6 6l12 12" />
                 </svg>
               </button>
             </div>
-
-            {/* Body */}
-            <div className="px-6 py-5 space-y-4">
-              <div className="space-y-1.5">
-                <label className="text-sm font-medium block">
-                  Why are you a good fit?
-                  <span className="text-[var(--color-muted)] font-normal ml-1">(required)</span>
-                </label>
-                <p className="text-xs text-[var(--color-muted)]">
-                  Briefly introduce yourself and explain what makes you a strong candidate for this role.
-                </p>
-                <textarea
-                  value={coverNote}
-                  onChange={(e) => setCoverNote(e.target.value)}
-                  placeholder="e.g. I am a third-year Computer Science student with experience in data analysis. I'm particularly drawn to this opportunity because…"
-                  rows={5}
-                  className="w-full border border-[var(--color-line)] rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-[var(--color-ink)] resize-none mt-2"
-                />
-                <p className={`text-xs text-right ${coverNote.trim().length > 0 && coverNote.trim().length < 30 ? 'text-amber-600' : 'text-[var(--color-muted)]'}`}>
-                  {coverNote.trim().length} / 500 {coverNote.trim().length < 30 && coverNote.trim().length > 0 ? '— add a bit more' : ''}
-                </p>
-              </div>
-              {error && <p className="text-red-600 text-sm">{error}</p>}
+            
+            <div style={{ padding: '24px' }}>
+              {error && <p style={{ color: '#dc2626', fontSize: '14px', marginBottom: '16px' }}>{error}</p>}
+              <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', color: 'var(--color-ink)', marginBottom: '8px' }}>
+                Cover Note (Optional)
+              </label>
+              <textarea
+                value={coverNote}
+                onChange={(e) => setCoverNote(e.target.value)}
+                placeholder="Briefly introduce yourself..."
+                rows={4}
+                style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid var(--color-line)', backgroundColor: '#f8fafc', fontSize: '14px', outline: 'none', resize: 'vertical', fontFamily: 'inherit' }}
+              />
             </div>
-
-            {/* Footer */}
-            <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-[var(--color-line)]">
-              <button
-                onClick={() => setShowForm(false)}
-                className="px-4 py-2 text-sm rounded-lg border border-[var(--color-line)] text-[var(--color-muted)] hover:text-[var(--color-ink)] hover:bg-[var(--color-line)] transition-colors"
+            
+            <div style={{ padding: '16px 24px', backgroundColor: '#f8fafc', borderTop: '1px solid var(--color-line)', borderBottomLeftRadius: '16px', borderBottomRightRadius: '16px', display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
+              <button 
+                onClick={() => setShowForm(false)} 
+                style={{ padding: '10px 16px', borderRadius: '8px', fontSize: '14px', fontWeight: '600', backgroundColor: 'transparent', color: 'var(--color-ink)', border: '1px solid var(--color-line)', cursor: 'pointer' }}
               >
                 Cancel
               </button>
-              <button
-                onClick={submitApplication}
-                disabled={submitting || coverNote.trim().length < 30}
-                className="px-5 py-2 text-sm rounded-lg bg-[var(--color-ink)] text-white hover:opacity-90 transition-opacity disabled:opacity-40 font-medium"
+              <button 
+                onClick={submitApplication} 
+                disabled={submitting} 
+                style={{ padding: '10px 24px', borderRadius: '8px', fontSize: '14px', fontWeight: '600', backgroundColor: '#1e3a8a', color: '#ffffff', border: 'none', cursor: submitting ? 'not-allowed' : 'pointer', opacity: submitting ? 0.7 : 1 }}
               >
-                {submitting ? 'Submitting…' : 'Submit application'}
+                {submitting ? 'Submitting...' : 'Submit Application'}
               </button>
             </div>
+
           </div>
         </div>
       )}

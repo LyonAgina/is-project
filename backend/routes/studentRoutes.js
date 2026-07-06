@@ -17,6 +17,8 @@ router.get('/notifications', c.getNotifications);
 router.put('/notifications/:id/read', c.markNotificationRead);
 router.get('/recommendations', matchController.getRecommendations);
 router.get('/opportunities/:id', c.getOpportunityById);
+router.post('/saved', c.toggleSaveOpportunity);
+router.get('/saved', c.getSavedOpportunities);
 
 
 module.exports = router;
