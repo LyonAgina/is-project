@@ -1,44 +1,29 @@
 // @ts-nocheck
 'use client';
 import { useEffect, useState } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { apiFetch } from '@/lib/api';
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 const STATUS_STYLES = {
-  submitted: 'bg-gray-50 text-gray-600 border-[var(--color-line)]',
-  under_review: 'bg-amber-50 text-amber-800 border-amber-200',
-  accepted: 'bg-green-50 text-green-700 border-green-200',
-  rejected: 'bg-red-50 text-red-700 border-red-200',
+  submitted: { bg: 'var(--color-paper)', fg: 'var(--color-muted)', border: 'var(--color-line)' },
+  under_review: { bg: '#eff6ff', fg: '#1d4ed8', border: '#bfdbfe' }, // System blue variant
+  accepted: { bg: '#f0fdf4', fg: '#15803d', border: '#bbf7d0' },
+  rejected: { bg: '#fef2f2', fg: '#b91c1c', border: '#fecaca' },
 };
 
-const STATUS_LABELS = {
-  submitted: 'Submitted',
-  under_review: 'Under review',
-  accepted: 'Accepted',
-  rejected: 'Rejected',
-};
-
-const DEFAULT_MESSAGES = {
-  under_review: 'Your application is currently under review. We will get back to you soon.',
-  accepted: 'Congratulations! Your application has been accepted.',
-  rejected: 'Thank you for applying. Unfortunately, your application was not successful at this time.',
-  submitted: 'Your application has been received.',
-};
-
-const GRADE_LABEL = {
-  first_class: 'First Class',
-  second_upper: 'Second Class Upper',
-  second_lower: 'Second Class Lower',
-  pass: 'Pass',
-};
+const STATUS_LABELS = { submitted: 'Submitted', under_review: 'Under Review', accepted: 'Accepted', rejected: 'Rejected' };
+const GRADE_LABEL = { first_class: 'First Class', second_upper: 'Second Class Upper', second_lower: 'Second Class Lower', pass: 'Pass' };
 
 export default function Applicants() {
   const { id } = useParams();
+  const router = useRouter();
   const [applicants, setApplicants] = useState([]);
   const [error, setError] = useState('');
-  const [modal, setModal] = useState<null | { appId: number; status: string; name: string }>(null);
+  const [modal, setModal] = useState(null);
   const [notifMsg, setNotifMsg] = useState('');
 
   useEffect(() => { load(); }, [id]);
@@ -50,98 +35,292 @@ export default function Applicants() {
       const data = await res.json();
       if (!res.ok || !Array.isArray(data)) throw new Error(data.error || 'Failed to load applicants');
       setApplicants(data);
-    } catch (err) {
-      setError(err.message);
-      setApplicants([]);
-    }
-  };
-
-  const openModal = (appId: number, status: string, name: string) => {
-    setModal({ appId, status, name });
-    setNotifMsg(DEFAULT_MESSAGES[status] || '');
+    } catch (err) { setError(err.message); setApplicants([]); }
   };
 
   const confirmUpdate = async () => {
     if (!modal) return;
     await apiFetch('/api/organization/applications/' + modal.appId + '/status', {
-      method: 'PUT',
-      body: JSON.stringify({ status: modal.status, message: notifMsg }),
+      method: 'PUT', body: JSON.stringify({ status: modal.status, message: notifMsg }),
     });
     setModal(null);
     load();
   };
 
-  return (
-    <div>
-      <h1 className="font-display text-2xl font-bold mb-6">Applicants</h1>
-      {error && <p className="text-red-600 mb-4">{error}</p>}
-      {!error && applicants.length === 0 && (
-        <p className="text-[var(--color-muted)]">No applicants yet.</p>
-      )}
+  const downloadApplicantsReport = () => {
+  const doc = new jsPDF({
+    orientation: "landscape",
+    unit: "mm",
+    format: "a4",
+  });
 
-      <div className="space-y-4">
+  const now = new Date();
+
+  const submitted = applicants.filter(a => a.status === "submitted").length;
+  const underReview = applicants.filter(a => a.status === "under_review").length;
+  const accepted = applicants.filter(a => a.status === "accepted").length;
+  const rejected = applicants.filter(a => a.status === "rejected").length;
+
+  // ==========================
+  // Title
+  // ==========================
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(20);
+  doc.text("APPLICANTS REPORT", 148, 18, { align: "center" });
+
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(11);
+  doc.text(
+    `Generated on: ${now.toLocaleDateString()} ${now.toLocaleTimeString()}`,
+    14,
+    30
+  );
+
+  doc.setDrawColor(180);
+  doc.line(14, 34, 283, 34);
+
+  // ==========================
+  // Summary
+  // ==========================
+  doc.setFontSize(15);
+  doc.setFont("helvetica", "bold");
+  doc.text("SUMMARY", 14, 45);
+
+  autoTable(doc, {
+    startY: 50,
+    theme: "grid",
+    head: [["Metric", "Count"]],
+    body: [
+      ["Total Applicants", applicants.length],
+      ["Submitted", submitted],
+      ["Under Review", underReview],
+      ["Accepted", accepted],
+      ["Rejected", rejected],
+    ],
+    headStyles: {
+      fillColor: [30, 58, 138],
+    },
+  });
+
+  // ==========================
+  // Applicant Table
+  // ==========================
+
+  const rows = applicants.map(a => [
+    a.full_name,
+    a.email,
+    a.education_level,
+    GRADE_LABEL[a.academic_grade] || "N/A",
+    a.experience_years ? `${a.experience_years} yrs` : "N/A",
+    a.location || "N/A",
+    STATUS_LABELS[a.status],
+    a.total_score ? `${Math.round(a.total_score)}%` : "N/A",
+  ]);
+
+  const finalY = doc.lastAutoTable.finalY + 12;
+
+  doc.setFontSize(15);
+  doc.setFont("helvetica", "bold");
+  doc.text("APPLICANT DETAILS", 14, finalY);
+
+  autoTable(doc, {
+    startY: finalY + 5,
+    head: [[
+      "Applicant",
+      "Email",
+      "Education",
+      "Grade",
+      "Experience",
+      "Location",
+      "Status",
+      "Match Score"
+    ]],
+    body: rows,
+    theme: "striped",
+    styles: {
+      fontSize: 9,
+      cellPadding: 3,
+      overflow: "linebreak",
+    },
+    headStyles: {
+      fillColor: [30, 58, 138],
+      textColor: 255,
+      fontStyle: "bold",
+    },
+    alternateRowStyles: {
+      fillColor: [245, 247, 250],
+    },
+  });
+
+  // ==========================
+  // Footer
+  // ==========================
+
+  const pages = doc.getNumberOfPages();
+
+  for (let i = 1; i <= pages; i++) {
+    doc.setPage(i);
+
+    doc.setDrawColor(180);
+    doc.line(14, 195, 283, 195);
+
+    doc.setFontSize(9);
+
+    doc.text(
+      "Generated by Student Opportunities Management System",
+      14,
+      202
+    );
+
+    doc.text(
+      `Page ${i} of ${pages}`,
+      283,
+      202,
+      { align: "right" }
+    );
+  }
+
+  // Unique filename
+  const timestamp = now
+    .toISOString()
+    .replace(/[:.]/g, "-");
+
+  doc.save(`Applicants_Report_${timestamp}.pdf`);
+};
+
+  return (
+    <div style={{ maxWidth: '1000px', margin: '0 auto' }}>
+      <button onClick={() => router.back()} style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontSize: '14px', fontWeight: '600', color: 'var(--color-muted)', marginBottom: '24px' }}>
+        &larr; Back to opportunities
+      </button>
+      
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'flex-start',
+          flexWrap: 'wrap',
+          gap: '16px',
+          marginBottom: '32px'
+        }}
+>
+        <h1 style={{ fontFamily: 'var(--font-disp)', fontSize: '28px', fontWeight: '700', color: 'var(--color-ink)' }}>Applicants</h1>
+        <div
+  style={{
+    display: 'flex',
+    alignItems: 'center',
+    gap: '12px'
+  }}
+>
+  <span
+    style={{
+      backgroundColor: '#1e3a8a',
+      color: '#ffffff',
+      fontSize: '12px',
+      fontWeight: '700',
+      padding: '6px 12px',
+      borderRadius: '8px'
+    }}
+  >
+    {applicants.length} Total
+  </span>
+
+  {applicants.length > 0 && (
+    <button
+      onClick={downloadApplicantsReport}
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: '8px',
+        backgroundColor: '#1e3a8a',
+        color: '#ffffff',
+        border: 'none',
+        padding: '10px 18px',
+        borderRadius: '10px',
+        fontSize: '14px',
+        fontWeight: '600',
+        cursor: 'pointer',
+        boxShadow: '0 4px 6px -1px rgba(30,58,138,0.2)',
+      }}
+    >
+      <svg
+        width="16"
+        height="16"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+        <polyline points="7 10 12 15 17 10" />
+        <line x1="12" y1="15" x2="12" y2="3" />
+      </svg>
+
+      Download Report
+    </button>
+  )}
+</div>
+      </div>
+
+      {error && <p style={{ color: '#dc2626', fontWeight: '600', padding: '16px', backgroundColor: 'rgba(220,38,38,0.05)', borderRadius: '12px', marginBottom: '16px' }}>{error}</p>}
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
         {applicants.map((a) => {
           const cvHref = a.cv_url ? (API_URL + a.cv_url) : null;
-          const cvLabel = a.cv_filename || 'View CV';
-          const scoreLabel = a.total_score != null ? Math.round(a.total_score) + '% match' : null;
-          const gradeLabel = a.academic_grade ? GRADE_LABEL[a.academic_grade] : null;
-          const statusClass = STATUS_STYLES[a.status] || STATUS_STYLES.submitted;
+          const s = STATUS_STYLES[a.status] || STATUS_STYLES.submitted;
           const initials = (a.full_name || '?').split(' ').map((p) => p[0]).slice(0, 2).join('').toUpperCase();
 
           return (
-            <div key={a.id} className="border border-[var(--color-line)] rounded-xl p-5">
-              <div className="flex justify-between items-start mb-3">
-                <div className="flex gap-3 items-start">
-                  <div className="w-10 h-10 rounded-full bg-[var(--color-paper)] border border-[var(--color-line)] flex items-center justify-center text-sm font-semibold shrink-0">
+            <div key={a.id} style={{ backgroundColor: '#ffffff', border: '1px solid var(--color-line)', borderRadius: '16px', padding: '24px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.02)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px' }}>
+                <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+                  <div style={{ width: '48px', height: '48px', borderRadius: '12px', backgroundColor: 'var(--color-paper)', border: '1px solid var(--color-line)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '15px', fontWeight: '700', color: '#1e3a8a' }}>
                     {initials}
                   </div>
                   <div>
-                    <p className="font-semibold">{a.full_name}</p>
-                    <p className="text-sm text-[var(--color-muted)]">{a.email}</p>
-                    <p className="text-sm text-[var(--color-muted)]">{a.institution || 'No institution set'}</p>
+                    <p style={{ fontSize: '18px', fontWeight: '700', color: 'var(--color-ink)', margin: '0 0 4px 0' }}>{a.full_name}</p>
+                    <p style={{ fontSize: '14px', color: 'var(--color-muted)', fontWeight: '500', margin: 0 }}>{a.email}</p>
                   </div>
                 </div>
-                <div className="text-right">
-                  <span className={'text-xs px-2 py-1 rounded-full border whitespace-nowrap ' + statusClass}>
+                <div style={{ textAlign: 'right' }}>
+                  <span style={{ fontSize: '11px', fontWeight: '700', padding: '4px 10px', borderRadius: '6px', textTransform: 'uppercase', letterSpacing: '0.05em', backgroundColor: s.bg, color: s.fg, border: `1px solid ${s.border}` }}>
                     {STATUS_LABELS[a.status] || a.status}
                   </span>
-                  {scoreLabel && <p className="text-sm font-mono text-[var(--color-accent)] mt-2">{scoreLabel}</p>}
+                  {a.total_score != null && (
+                    <p style={{ fontFamily: 'var(--font-mono)', fontSize: '24px', fontWeight: '700', color: 'var(--color-accent)', margin: '8px 0 0 0' }}>{Math.round(a.total_score)}%</p>
+                  )}
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-2 text-sm text-[var(--color-muted)] border-t border-[var(--color-line)] pt-3 mb-3">
-                <span>Education: {a.education_level || 'Not set'}</span>
-                <span>Grade: {gradeLabel || 'Not set'}</span>
-                <span>Experience: {a.experience_years != null ? a.experience_years + ' yrs' : 'Not set'}</span>
-                <span>Location: {a.location || 'Not set'}</span>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px', padding: '20px 0', borderTop: '1px solid var(--color-line)', borderBottom: '1px solid var(--color-line)', marginBottom: '20px' }}>
+                {[{l: 'Education', v: a.education_level || 'Not set'}, {l: 'Grade', v: GRADE_LABEL[a.academic_grade] || 'Not set'}, {l: 'Experience', v: a.experience_years != null ? a.experience_years + ' yrs' : 'Not set'}, {l: 'Location', v: a.location || 'Not set'}].map(stat => (
+                  <div key={stat.l} style={{ backgroundColor: 'var(--color-paper)', padding: '12px', borderRadius: '10px', border: '1px solid var(--color-line)' }}>
+                    <span style={{ display: 'block', fontSize: '10px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--color-muted)', marginBottom: '4px' }}>{stat.l}</span>
+                    <span style={{ fontSize: '14px', fontWeight: '600', color: 'var(--color-ink)' }}>{stat.v}</span>
+                  </div>
+                ))}
               </div>
 
-              {a.total_score != null && (
-                <div className="grid grid-cols-2 gap-2 text-sm text-[var(--color-muted)] border-t border-[var(--color-line)] pt-3 mb-3">
-                  <span className="font-medium text-[var(--color-ink)]">Similarity Score: {Math.round(a.text_similarity_score)}%</span>
-                  <span>Skills: {Math.round(a.skills_score)}%</span>
-                  <span>Education: {Math.round(a.education_score)}%</span>
-                  <span>Location: {Math.round(a.location_score)}%</span>
-                  <span>Experience: {Math.round(a.experience_score)}%</span>
-                  <span>Interests: {Math.round(a.interest_score)}%</span>
-                </div>
-              )}
-
-              <div className="flex justify-between items-center">
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 {cvHref ? (
-                  <a href={cvHref} target="_blank" className="text-sm underline text-[var(--color-ink)]">{cvLabel}</a>
+                  <a href={cvHref} target="_blank" style={{ fontSize: '14px', fontWeight: '700', color: '#1e3a8a', textDecoration: 'none' }}>Download CV &rarr;</a>
                 ) : (
-                  <span className="text-sm text-[var(--color-muted)]">No CV uploaded</span>
+                  <span style={{ fontSize: '14px', fontWeight: '500', color: 'var(--color-muted)' }}>No CV uploaded</span>
                 )}
                 <select
                   value={a.status}
-                  onChange={(e) => openModal(a.id, e.target.value, a.full_name)}
-                  className="text-sm border border-[var(--color-line)] rounded-md p-1.5 bg-white"
+                  onChange={(e) => {
+                    setModal({ appId: a.id, status: e.target.value, name: a.full_name });
+                    setNotifMsg(`Your application status has been updated to ${STATUS_LABELS[e.target.value]}.`);
+                  }}
+                  style={{ padding: '8px 16px', borderRadius: '10px', fontSize: '13px', fontWeight: '600', border: '1px solid var(--color-line)', backgroundColor: '#ffffff', color: 'var(--color-ink)', cursor: 'pointer' }}
                 >
-                  <option value="submitted">Submitted</option>
-                  <option value="under_review">Under review</option>
-                  <option value="accepted">Accepted</option>
-                  <option value="rejected">Rejected</option>
+                  <option value="submitted">Set Status: Submitted</option>
+                  <option value="under_review">Set Status: Under Review</option>
+                  <option value="accepted">Set Status: Accepted</option>
+                  <option value="rejected">Set Status: Rejected</option>
                 </select>
               </div>
             </div>
@@ -149,35 +328,23 @@ export default function Applicants() {
         })}
       </div>
 
-      {/* Notification modal */}
+      {/* Matching Modal style */}
       {modal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <div className="bg-white rounded-xl border border-[var(--color-line)] w-full max-w-md p-6 shadow-xl">
-            <h2 className="font-semibold text-lg mb-1">Update status & notify</h2>
-            <p className="text-sm text-[var(--color-muted)] mb-4">
-              Changing <strong>{modal.name}</strong>'s status to <span className="capitalize font-medium">{STATUS_LABELS[modal.status]}</span>.
-              They will receive the message below in their inbox.
+        <div style={{ position: 'fixed', inset: 0, zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.4)', padding: '16px' }}>
+          <div style={{ width: '100%', maxWidth: '440px', backgroundColor: '#ffffff', borderRadius: '16px', border: '1px solid var(--color-line)', padding: '32px', boxShadow: '0 10px 25px rgba(0,0,0,0.1)' }}>
+            <h2 style={{ fontFamily: 'var(--font-disp)', fontSize: '20px', fontWeight: '700', color: 'var(--color-ink)', marginBottom: '16px' }}>Update Status</h2>
+            <p style={{ fontSize: '14px', color: 'var(--color-muted)', fontWeight: '500', marginBottom: '24px', lineHeight: '1.5' }}>
+              Moving <strong style={{ color: 'var(--color-ink)' }}>{modal.name}</strong> to <span style={{ backgroundColor: 'var(--color-paper)', padding: '2px 6px', borderRadius: '4px', border: '1px solid var(--color-line)', fontWeight: '700', fontSize: '12px' }}>{STATUS_LABELS[modal.status]}</span>. 
             </p>
             <textarea
               value={notifMsg}
               onChange={(e) => setNotifMsg(e.target.value)}
               rows={4}
-              className="w-full border border-[var(--color-line)] rounded-lg px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-[var(--color-ink)] mb-4"
-              placeholder="Write a message to the applicant…"
+              style={{ width: '100%', padding: '12px', borderRadius: '12px', border: '1px solid var(--color-line)', fontSize: '14px', fontFamily: 'inherit', resize: 'none', outline: 'none', marginBottom: '24px', boxSizing: 'border-box' }}
             />
-            <div className="flex gap-2 justify-end">
-              <button
-                onClick={() => setModal(null)}
-                className="px-4 py-2 text-sm rounded-lg border border-[var(--color-line)] hover:bg-[var(--color-paper)]"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={confirmUpdate}
-                className="px-4 py-2 text-sm rounded-lg bg-[var(--color-ink)] text-white font-medium hover:opacity-90"
-              >
-                Confirm & send
-              </button>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
+              <button onClick={() => setModal(null)} style={{ padding: '10px 20px', borderRadius: '10px', fontSize: '14px', fontWeight: '600', backgroundColor: '#ffffff', border: '1px solid var(--color-line)', color: 'var(--color-ink)', cursor: 'pointer' }}>Cancel</button>
+              <button onClick={confirmUpdate} style={{ padding: '10px 20px', borderRadius: '10px', fontSize: '14px', fontWeight: '600', backgroundColor: '#1e3a8a', border: 'none', color: '#ffffff', cursor: 'pointer' }}>Confirm & Send</button>
             </div>
           </div>
         </div>

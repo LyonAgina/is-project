@@ -5,18 +5,16 @@ import Link from 'next/link';
 import { apiFetch } from '@/lib/api';
 
 const STATUS_STYLES = {
-  active: 'bg-green-50 text-green-700 border-green-200',
-  draft: 'bg-gray-50 text-gray-600 border-[var(--color-line)]',
-  closed: 'bg-red-50 text-red-700 border-red-200',
+  active: { bg: '#f0fdf4', fg: '#15803d', border: '#bbf7d0' },
+  draft: { bg: 'var(--color-paper)', fg: 'var(--color-muted)', border: 'var(--color-line)' },
+  closed: { bg: '#fef2f2', fg: '#b91c1c', border: '#fecaca' },
 };
 
 export default function MyOpportunities() {
   const [opps, setOpps] = useState([]);
   const [error, setError] = useState('');
 
-  useEffect(() => {
-    load();
-  }, []);
+  useEffect(() => { load(); }, []);
 
   const load = async () => {
     setError('');
@@ -42,64 +40,72 @@ export default function MyOpportunities() {
     load();
   };
 
+  const btnStyle = { padding: '8px 16px', borderRadius: '10px', fontSize: '13px', fontWeight: '600', textDecoration: 'none', border: '1px solid var(--color-line)', color: 'var(--color-ink)', backgroundColor: '#ffffff', transition: 'background-color 0.2s', cursor: 'pointer' };
+
   return (
-    <div>
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="font-display text-2xl font-bold">My opportunities</h1>
-        <Link href="/dashboard/organization/create" className="bg-[var(--color-ink)] text-white px-4 py-2 rounded-md text-sm">
+    <div style={{ maxWidth: '1000px', margin: '0 auto' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
+        <h1 style={{ fontFamily: 'var(--font-disp)', fontSize: '28px', fontWeight: '700', color: 'var(--color-ink)' }}>My opportunities</h1>
+        <Link href="/dashboard/organization/create" style={{ backgroundColor: '#1e3a8a', color: '#ffffff', padding: '10px 20px', borderRadius: '10px', fontSize: '14px', fontWeight: '600', textDecoration: 'none', boxShadow: '0 4px 6px -1px rgba(30, 58, 138, 0.2)' }}>
           + New opportunity
         </Link>
       </div>
 
-      {error && <p className="text-red-600 mb-4">{error}</p>}
+      {error && <p style={{ color: '#dc2626', fontWeight: '600', padding: '16px', backgroundColor: 'rgba(220,38,38,0.05)', borderRadius: '12px' }}>{error}</p>}
+      
       {!error && opps.length === 0 && (
-        <p className="text-[var(--color-muted)]">You haven't posted any opportunities yet.</p>
+        <div style={{ textAlign: 'center', padding: '64px 24px', backgroundColor: '#ffffff', border: '1px solid var(--color-line)', borderRadius: '16px' }}>
+          <p style={{ color: 'var(--color-muted)', fontWeight: '500', marginBottom: '16px' }}>You haven't posted any opportunities yet.</p>
+          <Link href="/dashboard/organization/create" style={{ color: '#1e3a8a', fontWeight: '700', textDecoration: 'none' }}>Create your first post</Link>
+        </div>
       )}
 
-      <div className="space-y-4">
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
         {opps.map((o) => {
-          const statusClass = STATUS_STYLES[o.status] || STATUS_STYLES.draft;
-          const applicantsHref = '/dashboard/organization/opportunities/' + o.id + '/applicants';
+          const s = STATUS_STYLES[o.status] || STATUS_STYLES.draft;
           return (
-            <div key={o.id} className="border border-[var(--color-line)] rounded-xl p-5">
-              <div className="flex justify-between items-start mb-4">
+            <div key={o.id} style={{ backgroundColor: '#ffffff', border: '1px solid var(--color-line)', borderRadius: '16px', padding: '24px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.02)' }}>
+              
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '24px' }}>
                 <div>
-                  <h2 className="font-semibold text-lg">{o.title}</h2>
-                  <p className="text-sm text-[var(--color-muted)] capitalize mt-1">
-                    {o.category} · {o.location || 'Location not set'}
-                  </p>
-                  {o.deadline && (
-                    <p className="text-xs text-[var(--color-muted)] mt-1">
-                      Deadline: {new Date(o.deadline).toLocaleDateString()}
-                    </p>
-                  )}
+                  <h2 style={{ fontSize: '18px', fontWeight: '700', color: 'var(--color-ink)', marginBottom: '8px' }}>{o.title}</h2>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', color: 'var(--color-muted)', fontWeight: '500', textTransform: 'capitalize' }}>
+                    <span>{o.category}</span>
+                    <span style={{ width: '4px', height: '4px', borderRadius: '50%', backgroundColor: 'var(--color-line)' }}></span>
+                    <span>{o.location || 'Location not set'}</span>
+                    {o.deadline && (
+                      <>
+                        <span style={{ width: '4px', height: '4px', borderRadius: '50%', backgroundColor: 'var(--color-line)' }}></span>
+                        <span>Due: {new Date(o.deadline).toLocaleDateString()}</span>
+                      </>
+                    )}
+                  </div>
                 </div>
-                <span className={'text-xs px-2 py-1 rounded-full border capitalize whitespace-nowrap ' + statusClass}>
+                <span style={{ fontSize: '11px', fontWeight: '700', padding: '4px 10px', borderRadius: '6px', textTransform: 'uppercase', letterSpacing: '0.05em', backgroundColor: s.bg, color: s.fg, border: `1px solid ${s.border}` }}>
                   {o.status}
                 </span>
               </div>
 
-              <div className="flex gap-2 items-center pt-3 border-t border-[var(--color-line)]">
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', alignItems: 'center', paddingTop: '20px', borderTop: '1px solid var(--color-line)' }}>
                 <select
                   value={o.status}
                   onChange={(e) => updateStatus(o.id, e.target.value)}
-                  className="text-sm border border-[var(--color-line)] rounded-md p-1.5"
+                  style={{ ...btnStyle, backgroundColor: 'var(--color-paper)', border: '1px solid var(--color-line)' }}
                 >
-                  <option value="draft">Draft</option>
-                  <option value="active">Active</option>
-                  <option value="closed">Closed</option>
+                  <option value="draft">Status: Draft</option>
+                  <option value="active">Status: Active</option>
+                  <option value="closed">Status: Closed</option>
                 </select>
-                <Link href={applicantsHref} className="text-sm border border-[var(--color-line)] px-3 py-1.5 rounded-md hover:border-[var(--color-ink)] transition-colors">
+                
+                <Link href={`/dashboard/organization/opportunities/${o.id}/applicants`} style={btnStyle}>
                   View applicants
                 </Link>
-                <Link
-                  href={`/dashboard/organization/opportunities/${o.id}/compare`}
-                  className="text-sm font-medium px-3 py-1.5 rounded-lg"
-                  style={{ border: '1px solid #e5e7eb', color: '#111827' }}
-                >
+                
+                <Link href={`/dashboard/organization/opportunities/${o.id}/compare`} style={btnStyle}>
                   Compare applicants
                 </Link>
-                <button onClick={() => remove(o.id)} className="text-sm text-red-600 ml-auto px-2">
+                
+                <button onClick={() => remove(o.id)} style={{ ...btnStyle, marginLeft: 'auto', border: 'none', color: '#dc2626' }}>
                   Delete
                 </button>
               </div>

@@ -6,18 +6,17 @@ import Link from 'next/link';
 import { apiFetch } from '@/lib/api';
 
 const links = [
-  { href: '/dashboard/organization', label: 'Home' },
+  { href: '/dashboard/organization', label: 'Home & Analytics' },
   { href: '/dashboard/organization/create', label: 'Create opportunity' },
   { href: '/dashboard/organization/opportunities', label: 'My opportunities' },
   { href: '/dashboard/organization/profile', label: 'Profile' },
-  { href: '/dashboard/organization/reports', label: 'Reports' },
 ];
 
 export default function OrganizationLayout({ children }) {
   const router = useRouter();
   const pathname = usePathname();
   const [ready, setReady] = useState(false);
-  const [status, setStatus] = useState(null);
+  const [profile, setProfile] = useState(null);
 
   useEffect(() => {
     const role = localStorage.getItem('role');
@@ -26,7 +25,10 @@ export default function OrganizationLayout({ children }) {
       return;
     }
     setReady(true);
-    apiFetch('/api/organization/profile').then((r) => r.json()).then((d) => setStatus(d.verification_status)).catch(() => {});
+    apiFetch('/api/organization/profile')
+      .then((r) => r.json())
+      .then((d) => setProfile(d))
+      .catch(() => {});
   }, []);
 
   const logout = () => {
@@ -36,42 +38,112 @@ export default function OrganizationLayout({ children }) {
 
   if (!ready) return null;
 
+  const initials = (profile?.name || '?').split(' ').map(p => p[0]).slice(0, 2).join('').toUpperCase();
+  const status = profile?.verification_status;
+
   return (
-    <div className="min-h-screen flex">
-      <aside className="w-56 border-r border-[var(--color-line)] p-6 flex flex-col">
-        <span className="font-display text-base font-bold mb-8 px-2 text-[var(--color-ink)]">Opportunity Hub</span>
-        <nav className="flex flex-col gap-1 flex-1">
-          {links.map((l) => (
-            <Link
-              key={l.href}
-              href={l.href}
-              className={`text-sm px-3 py-2 rounded-md ${
-                pathname === l.href ? 'bg-[var(--color-ink)] text-white' : 'text-[var(--color-muted)] hover:bg-[var(--color-paper)]'
-              }`}
-            >
-              {l.label}
-            </Link>
-          ))}
+    <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: 'var(--color-paper)', color: 'var(--color-ink)', fontFamily: 'var(--font-body-text), sans-serif' }}>
+      
+      {/* Sidebar */}
+      <aside style={{ width: '260px', backgroundColor: '#ffffff', borderRight: '1px solid var(--color-line)', padding: '24px', display: 'flex', flexDirection: 'column', position: 'fixed', top: 0, bottom: 0, left: 0, zIndex: 20 }}>
+        
+        {/* Logo Section */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '40px' }}>
+          <div style={{ backgroundColor: '#1e3a8a', width: '36px', height: '36px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 4px rgba(30, 58, 138, 0.2)' }}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ width: '20px', height: '20px' }}>
+              <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+              <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+              <line x1="12" y1="22.08" x2="12" y2="12"></line>
+            </svg>
+          </div>
+          <span style={{ fontSize: '18px', fontWeight: '700', color: 'var(--color-ink)', letterSpacing: '-0.01em' }}>Opportunity Hub</span>
+        </div>
+        
+        {/* Navigation */}
+        <nav style={{ display: 'flex', flexDirection: 'column', gap: '8px', flex: 1 }}>
+          {links.map((l) => {
+            const active = pathname === l.href || (l.href !== '/dashboard/organization' && pathname.startsWith(l.href));
+            return (
+              <Link
+                key={l.href}
+                href={l.href}
+                style={{
+                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                  padding: '12px 16px', borderRadius: '12px', fontSize: '14px', textDecoration: 'none',
+                  backgroundColor: active ? '#1e3a8a' : 'transparent',
+                  color: active ? '#ffffff' : 'var(--color-muted)',
+                  fontWeight: active ? '600' : '500',
+                  boxShadow: active ? '0 4px 6px -1px rgba(30, 58, 138, 0.2)' : 'none',
+                  transition: 'all 0.2s ease'
+                }}
+              >
+                <span>{l.label}</span>
+              </Link>
+            );
+          })}
         </nav>
-        <button onClick={logout} className="text-sm text-left text-[var(--color-muted)] hover:text-[var(--color-ink)]">
-          Log out
-        </button>
       </aside>
-      <div className="flex-1 flex flex-col">
-        <header className="border-b border-[var(--color-line)] px-8 py-4">
-          <span className="text-sm text-[var(--color-muted)]">Organization dashboard</span>
+
+      {/* Main Content Area */}
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', marginLeft: '260px', minWidth: 0 }}>
+        
+        {/* Sticky Header */}
+        <header style={{ 
+          position: 'sticky', top: 0, zIndex: 10, backgroundColor: 'rgba(243, 245, 247, 0.9)', 
+          backdropFilter: 'blur(8px)', borderBottom: '1px solid var(--color-line)', 
+          padding: '16px 32px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' 
+        }}>
+          <div style={{ fontSize: '14px', fontWeight: '600', color: 'var(--color-muted)' }}>Organization Dashboard</div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
+            
+            {/* Profile Avatar */}
+            <Link href="/dashboard/organization/profile" style={{ display: 'block', textDecoration: 'none' }}>
+              <div style={{ 
+                width: '44px', height: '44px', borderRadius: '12px', backgroundColor: '#ffffff', 
+                color: '#1e3a8a', display: 'flex', alignItems: 'center', justifyContent: 'center', 
+                fontSize: '15px', fontWeight: '700', border: '1px solid var(--color-line)', boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
+              }}>
+                {initials}
+              </div>
+            </Link>
+            
+            <div style={{ height: '24px', width: '1px', backgroundColor: 'var(--color-line)' }}></div>
+            
+            {/* Logout */}
+            <button
+              onClick={logout}
+              style={{ 
+                background: 'none', border: 'none', padding: 0, cursor: 'pointer', 
+                fontSize: '14px', fontWeight: '600', color: 'var(--color-muted)', transition: 'color 0.2s' 
+              }}
+              onMouseOver={(e) => e.target.style.color = '#dc2626'}
+              onMouseOut={(e) => e.target.style.color = 'var(--color-muted)'}
+            >
+              Log out
+            </button>
+          </div>
         </header>
+
+        {/* Verification Alert Banner */}
         {status && status !== 'verified' && (
-          <div className={`px-8 py-3 text-sm ${status === 'pending' ? 'bg-amber-50 text-amber-800' : 'bg-red-50 text-red-700'}`}>
+          <div style={{ 
+            margin: '24px 32px 0 32px', padding: '16px 20px', borderRadius: '12px', fontSize: '14px', fontWeight: '600',
+            backgroundColor: status === 'pending' ? 'rgba(245, 158, 11, 0.1)' : 'rgba(220, 38, 38, 0.1)',
+            color: status === 'pending' ? '#b45309' : '#b91c1c',
+            border: `1px solid ${status === 'pending' ? 'rgba(245, 158, 11, 0.3)' : 'rgba(220, 38, 38, 0.3)'}`
+          }}>
             {status === 'pending'
-              ? 'Your organization is awaiting admin verification. You can browse the dashboard, but cannot post opportunities yet.'
+              ? 'Your organization is awaiting admin verification. You can browse the dashboard, but active opportunities may be restricted.'
               : 'Your organization was not approved. Contact the admin for details.'}
           </div>
         )}
-        <main className="flex-1 p-8">{children}</main>
-        <footer className="border-t border-[var(--color-line)] px-8 py-4 text-xs text-[var(--color-muted)]">
-          For organizations &amp; universities
-        </footer>
+
+        {/* Constrained Main Canvas */}
+        <main style={{ flex: 1, padding: '32px', overflowY: 'auto' }}>
+          <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
+            {children}
+          </div>
+        </main>
       </div>
     </div>
   );

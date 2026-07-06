@@ -1,7 +1,8 @@
 'use client';
-
+// @ts-nocheck
 import { useState } from 'react';
 import Link from 'next/link';
+import AuthLayout from '@/components/AuthLayout';
 
 export default function ForgotPassword() {
   const [email, setEmail] = useState('');
@@ -30,34 +31,57 @@ export default function ForgotPassword() {
     }
   };
 
-  return (
-    <div className="flex min-h-screen items-center justify-center p-4">
-      <main className="w-full max-w-md rounded-xl border border-[var(--color-line)] p-8">
-        <h1 className="text-xl font-bold mb-2 text-center">Forgot your password?</h1>
+  const inputStyle = {
+    width: '100%',
+    borderRadius: '12px',
+    border: '1px solid var(--color-line)',
+    backgroundColor: '#ffffff',
+    color: 'var(--color-ink)',
+    padding: '12px 16px',
+    fontSize: '14px',
+    fontWeight: '500',
+    outline: 'none',
+    boxSizing: 'border-box',
+    fontFamily: 'inherit'
+  };
 
+  return (
+    <AuthLayout title="Reset Password">
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
         {status === 'sent' ? (
-          <p className="text-sm text-[var(--color-muted)] text-center">
-            If an account exists for <strong>{email}</strong>, we've sent a password reset link to it.
-          </p>
+          <div style={{ padding: '16px', backgroundColor: 'rgba(31, 111, 92, 0.05)', border: '1px solid var(--color-line)', borderRadius: '12px', textAlign: 'center' }}>
+            <p style={{ fontSize: '14px', lineHeight: '1.5', color: 'var(--color-accent-2)', fontWeight: '500', margin: 0 }}>
+              If an account exists for <strong style={{ color: 'var(--color-ink)', fontWeight: '700' }}>{email}</strong>, we've sent a password reset link to it. Check your inbox.
+            </p>
+          </div>
         ) : (
           <>
-            <p className="text-sm text-[var(--color-muted)] text-center mb-6">
-              Enter your email and we'll send you a link to reset your password.
+            <p style={{ fontSize: '14px', color: 'var(--color-muted)', textAlign: 'center', lineHeight: '1.5', fontWeight: '500', margin: '0 0 8px 0' }}>
+              Enter your email and we'll send you a link to reset your password safely.
             </p>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <input
-                type="email"
-                placeholder="Email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                className="w-full rounded border border-[var(--color-line)] bg-transparent p-2"
-              />
-              {error && <p className="text-red-600 text-sm">{error}</p>}
+            <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <div>
+                <label style={{ fontSize: '10px', fontWeight: '700', color: 'var(--color-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '6px' }}>Email Address</label>
+                <input
+                  type="email"
+                  placeholder="name@example.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  style={inputStyle}
+                />
+              </div>
+              
+              {error && (
+                <div style={{ padding: '12px', backgroundColor: 'rgba(220, 38, 38, 0.05)', border: '1px solid rgba(220, 38, 38, 0.2)', borderRadius: '12px', textAlign: 'center' }}>
+                  <p style={{ fontSize: '13px', fontWeight: '600', color: '#dc2626', margin: 0 }}>{error}</p>
+                </div>
+              )}
+
               <button
                 type="submit"
                 disabled={status === 'loading'}
-                className="w-full bg-black text-white p-2 rounded disabled:opacity-60"
+                style={{ width: '100%', backgroundColor: '#1e3a8a', color: '#ffffff', fontWeight: '600', padding: '14px', borderRadius: '12px', border: 'none', fontSize: '14px', cursor: 'pointer', transition: 'opacity 0.2s', opacity: status === 'loading' ? 0.6 : 1, boxShadow: '0 4px 6px -1px rgba(30, 58, 138, 0.2)' }}
               >
                 {status === 'loading' ? 'Sending…' : 'Send reset link'}
               </button>
@@ -65,10 +89,12 @@ export default function ForgotPassword() {
           </>
         )}
 
-        <p className="mt-4 text-center text-sm text-[var(--color-muted)]">
-          <Link href="/login" className="hover:underline">Back to login</Link>
-        </p>
-      </main>
-    </div>
+        <div style={{ textAlign: 'center', marginTop: '12px' }}>
+          <Link href="/login" style={{ fontSize: '14px', fontWeight: '600', color: 'var(--color-muted)', textDecoration: 'none' }}>
+            Back to login
+          </Link>
+        </div>
+      </div>
+    </AuthLayout>
   );
 }

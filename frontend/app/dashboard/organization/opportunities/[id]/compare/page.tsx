@@ -5,23 +5,17 @@ import { useParams, useRouter } from 'next/navigation';
 import { apiFetch } from '@/lib/api';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
-
-const GRADE_LABEL = {
-  first_class: 'First Class',
-  second_upper: 'Second Class Upper',
-  second_lower: 'Second Class Lower',
-  pass: 'Pass',
-};
+const GRADE_LABEL = { first_class: 'First Class', second_upper: 'Second Class Upper', second_lower: 'Second Class Lower', pass: 'Pass' };
 
 function ScoreBar({ label, value, color }) {
   return (
-    <div className="mb-2.5">
-      <div className="flex justify-between text-xs mb-1">
-        <span style={{ color: '#6b7280' }}>{label}</span>
-        <span className="font-medium" style={{ color }}>{Math.round(value || 0)}%</span>
+    <div style={{ marginBottom: '12px' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', marginBottom: '6px', fontWeight: '600' }}>
+        <span style={{ color: 'var(--color-muted)' }}>{label}</span>
+        <span style={{ color: color }}>{Math.round(value || 0)}%</span>
       </div>
-      <div className="w-full h-1.5 rounded-full" style={{ background: '#f3f4f6' }}>
-        <div className="h-1.5 rounded-full" style={{ width: `${Math.min(100, value || 0)}%`, background: color }} />
+      <div style={{ width: '100%', height: '6px', borderRadius: '999px', backgroundColor: 'var(--color-paper)' }}>
+        <div style={{ height: '6px', borderRadius: '999px', width: `${Math.min(100, value || 0)}%`, backgroundColor: color }} />
       </div>
     </div>
   );
@@ -42,17 +36,14 @@ export default function CompareApplicants() {
       const data = await res.json();
       if (!res.ok || !Array.isArray(data)) throw new Error(data.error || 'Failed to load applicants');
       setApplicants(data);
-      // default: top 3 by score
       setSelected(data.slice(0, 3).map((a) => a.id));
-    } catch (err) {
-      setError(err.message);
-    }
+    } catch (err) { setError(err.message); }
   };
 
   const toggleSelect = (appId: number) => {
     setSelected((prev) => {
       if (prev.includes(appId)) return prev.filter((id) => id !== appId);
-      if (prev.length >= 4) return prev; // cap at 4 columns
+      if (prev.length >= 4) return prev;
       return [...prev, appId];
     });
   };
@@ -60,32 +51,27 @@ export default function CompareApplicants() {
   const compared = applicants.filter((a) => selected.includes(a.id));
 
   return (
-    <div>
-      <button onClick={() => router.back()} className="text-sm mb-4 hover:underline" style={{ color: '#6b7280' }}>
-        ← Back to applicants
+    <div style={{ maxWidth: '1200px', margin: '0 auto', paddingBottom: '40px' }}>
+      <button onClick={() => router.back()} style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontSize: '14px', fontWeight: '600', color: 'var(--color-muted)', marginBottom: '24px' }}>
+        &larr; Back to applicants
       </button>
-      <h1 className="font-display text-2xl font-bold mb-1">Compare applicants</h1>
-      <p className="text-sm mb-6" style={{ color: '#6b7280' }}>Select up to 4 applicants to compare side by side.</p>
+      <h1 style={{ fontFamily: 'var(--font-disp)', fontSize: '28px', fontWeight: '700', color: 'var(--color-ink)', marginBottom: '8px' }}>Compare applicants</h1>
+      <p style={{ fontSize: '14px', color: 'var(--color-muted)', fontWeight: '500', marginBottom: '32px' }}>Select up to 4 applicants to compare side by side.</p>
 
-      {error && (
-        <div className="rounded-lg text-sm px-4 py-3 mb-6" style={{ border: '1px solid #fecaca', background: '#fef2f2', color: '#b91c1c' }}>
-          {error}
-        </div>
-      )}
+      {error && <div style={{ padding: '16px', backgroundColor: 'rgba(220,38,38,0.05)', borderRadius: '12px', border: '1px solid rgba(220,38,38,0.2)', color: '#dc2626', fontWeight: '600', marginBottom: '24px' }}>{error}</div>}
 
-      {/* Selector chips */}
-      <div className="flex flex-wrap gap-2 mb-6">
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', marginBottom: '40px' }}>
         {applicants.map((a) => {
           const isSelected = selected.includes(a.id);
           return (
             <button
               key={a.id}
               onClick={() => toggleSelect(a.id)}
-              className="text-xs font-medium px-3 py-1.5 rounded-full transition-colors"
               style={{
-                background: isSelected ? '#111827' : '#ffffff',
-                color: isSelected ? '#ffffff' : '#4b5563',
-                border: '1px solid ' + (isSelected ? '#111827' : '#e5e7eb'),
+                fontSize: '13px', fontWeight: '600', padding: '8px 16px', borderRadius: '999px', cursor: 'pointer', transition: 'all 0.2s',
+                backgroundColor: isSelected ? '#1e3a8a' : '#ffffff',
+                color: isSelected ? '#ffffff' : 'var(--color-ink)',
+                border: `1px solid ${isSelected ? '#1e3a8a' : 'var(--color-line)'}`
               }}
             >
               {a.full_name} · {Math.round(a.total_score || 0)}%
@@ -95,58 +81,46 @@ export default function CompareApplicants() {
       </div>
 
       {compared.length === 0 ? (
-        <p className="text-sm" style={{ color: '#6b7280' }}>Select at least one applicant above to compare.</p>
+        <p style={{ color: 'var(--color-muted)', fontWeight: '500' }}>Select at least one applicant above to compare.</p>
       ) : (
-        <div className="overflow-x-auto">
-          <div className="grid gap-4" style={{ gridTemplateColumns: `repeat(${compared.length}, minmax(220px, 1fr))` }}>
-            {compared.map((a) => {
-              const initials = (a.full_name || '?').split(' ').map((p) => p[0]).slice(0, 2).join('').toUpperCase();
-              const cvHref = a.cv_url ? API_URL + a.cv_url : null;
-              return (
-                <div key={a.id} className="rounded-xl p-5" style={{ border: '1px solid #e5e7eb', background: '#ffffff' }}>
-                  <div className="flex items-center gap-3 mb-4">
-                    <div
-                      className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-semibold shrink-0"
-                      style={{ background: '#f3f4f6', color: '#4b5563' }}
-                    >
-                      {initials}
-                    </div>
-                    <div className="min-w-0">
-                      <p className="font-semibold text-sm truncate">{a.full_name}</p>
-                      <p className="text-xs truncate" style={{ color: '#6b7280' }}>{a.institution || 'No institution'}</p>
-                    </div>
+        <div style={{ display: 'grid', gap: '24px', gridTemplateColumns: `repeat(${compared.length}, minmax(260px, 1fr))` }}>
+          {compared.map((a) => {
+            const initials = (a.full_name || '?').split(' ').map((p) => p[0]).slice(0, 2).join('').toUpperCase();
+            return (
+              <div key={a.id} style={{ backgroundColor: '#ffffff', border: '1px solid var(--color-line)', borderRadius: '16px', padding: '24px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.02)' }}>
+                
+                <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '24px' }}>
+                  <div style={{ width: '48px', height: '48px', borderRadius: '12px', backgroundColor: 'var(--color-paper)', border: '1px solid var(--color-line)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '15px', fontWeight: '700', color: '#1e3a8a', flexShrink: 0 }}>
+                    {initials}
                   </div>
-
-                  <div className="text-center mb-4 py-3 rounded-lg" style={{ background: '#f9fafb' }}>
-                    <p className="text-2xl font-bold" style={{ color: '#111827' }}>{Math.round(a.total_score || 0)}%</p>
-                    <p className="text-xs" style={{ color: '#6b7280' }}>overall match</p>
+                  <div style={{ minWidth: 0 }}>
+                    <p style={{ fontSize: '16px', fontWeight: '700', color: 'var(--color-ink)', margin: '0 0 4px 0', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{a.full_name}</p>
+                    <p style={{ fontSize: '13px', color: 'var(--color-muted)', fontWeight: '500', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{a.institution || 'No institution'}</p>
                   </div>
-
-                  <ScoreBar label="Similarity Score" value={a.text_similarity_score} color="#1d4ed8" />
-                  <ScoreBar label="Skills" value={a.skills_score} color="#7e22ce" />
-                  <ScoreBar label="Education" value={a.education_score} color="#15803d" />
-                  <ScoreBar label="Location" value={a.location_score} color="#92400e" />
-                  <ScoreBar label="Experience" value={a.experience_score} color="#be185d" />
-                  <ScoreBar label="Interests" value={a.interest_score} color="#0891b2" />
-
-                  <div className="mt-4 pt-4 space-y-1.5 text-xs" style={{ borderTop: '1px solid #f3f4f6', color: '#6b7280' }}>
-                    <p>Education: {a.education_level || 'Not set'}</p>
-                    <p>Grade: {GRADE_LABEL[a.academic_grade] || 'Not set'}</p>
-                    <p>Experience: {a.experience_years != null ? a.experience_years + ' yrs' : 'Not set'}</p>
-                    <p>Location: {a.location || 'Not set'}</p>
-                  </div>
-
-                  {cvHref ? (
-                    <a href={cvHref} target="_blank" className="block mt-4 text-center text-xs font-medium hover:underline" style={{ color: '#111827' }}>
-                      View CV
-                    </a>
-                  ) : (
-                    <p className="mt-4 text-center text-xs" style={{ color: '#9ca3af' }}>No CV uploaded</p>
-                  )}
                 </div>
-              );
-            })}
-          </div>
+
+                <div style={{ textAlign: 'center', padding: '20px', borderRadius: '12px', backgroundColor: 'var(--color-paper)', border: '1px solid var(--color-line)', marginBottom: '24px' }}>
+                  <p style={{ fontFamily: 'var(--font-mono)', fontSize: '32px', fontWeight: '700', color: 'var(--color-accent)', margin: '0 0 4px 0' }}>{Math.round(a.total_score || 0)}%</p>
+                  <p style={{ fontSize: '11px', fontWeight: '700', letterSpacing: '0.05em', color: 'var(--color-muted)', textTransform: 'uppercase', margin: 0 }}>Overall Match</p>
+                </div>
+
+                {/* Using primary system blue scale for the bars */}
+                <ScoreBar label="Similarity Score" value={a.text_similarity_score} color="#1e3a8a" />
+                <ScoreBar label="Skills" value={a.skills_score} color="#3b82f6" />
+                <ScoreBar label="Education" value={a.education_score} color="#60a5fa" />
+                <ScoreBar label="Location" value={a.location_score} color="#93c5fd" />
+                <ScoreBar label="Experience" value={a.experience_score} color="#1e3a8a" />
+                <ScoreBar label="Interests" value={a.interest_score} color="#3b82f6" />
+
+                <div style={{ marginTop: '24px', paddingTop: '24px', borderTop: '1px solid var(--color-line)', display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '13px', color: 'var(--color-muted)', fontWeight: '500' }}>
+                  <p style={{ margin: 0 }}><strong style={{ color: 'var(--color-ink)' }}>Education:</strong> {a.education_level || 'Not set'}</p>
+                  <p style={{ margin: 0 }}><strong style={{ color: 'var(--color-ink)' }}>Grade:</strong> {GRADE_LABEL[a.academic_grade] || 'Not set'}</p>
+                  <p style={{ margin: 0 }}><strong style={{ color: 'var(--color-ink)' }}>Experience:</strong> {a.experience_years != null ? a.experience_years + ' yrs' : 'Not set'}</p>
+                  <p style={{ margin: 0 }}><strong style={{ color: 'var(--color-ink)' }}>Location:</strong> {a.location || 'Not set'}</p>
+                </div>
+              </div>
+            );
+          })}
         </div>
       )}
     </div>

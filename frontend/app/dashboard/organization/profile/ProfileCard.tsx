@@ -1,25 +1,25 @@
 'use client';
+// @ts-nocheck
 import { ReactNode } from 'react';
 
 interface ProfileCardProps {
   title?: string;
   onEdit?: () => void;
   children: ReactNode;
-  className?: string;
 }
 
-export default function ProfileCard({ title, onEdit, children, className = '' }: ProfileCardProps) {
+export default function ProfileCard({ title, onEdit, children }: ProfileCardProps) {
   return (
-    <div className={`bg-[var(--color-surface)] border border-[var(--color-line)] rounded-xl p-6 ${className}`}>
+    <div style={{ backgroundColor: '#ffffff', border: '1px solid var(--color-line)', borderRadius: '16px', padding: '32px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.02)' }}>
       {(title || onEdit) && (
-        <div className="flex items-center justify-between mb-5">
-          {title && <h2 className="font-semibold text-base text-[var(--color-ink)]">{title}</h2>}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px' }}>
+          {title && <h2 style={{ fontSize: '18px', fontWeight: '700', color: 'var(--color-ink)', margin: 0 }}>{title}</h2>}
           {onEdit && (
             <button
               onClick={onEdit}
-              className="flex items-center gap-1.5 text-sm text-[var(--color-muted)] hover:text-[var(--color-ink)] transition-colors px-2.5 py-1 rounded-lg hover:bg-[var(--color-line)]"
+              style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', fontWeight: '600', color: '#1e3a8a', background: 'var(--color-paper)', border: '1px solid var(--color-line)', padding: '6px 12px', borderRadius: '8px', cursor: 'pointer' }}
             >
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
                 <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
               </svg>
@@ -28,7 +28,7 @@ export default function ProfileCard({ title, onEdit, children, className = '' }:
           )}
         </div>
       )}
-      {children}
+      <div>{children}</div>
     </div>
   );
 }
