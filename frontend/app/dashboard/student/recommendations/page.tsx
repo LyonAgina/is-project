@@ -144,7 +144,7 @@ export default function StudentRecommendations() {
               <div style={{ backgroundColor: '#f8fafc', padding: '24px', borderRadius: '12px', border: '1px solid var(--color-line)', marginBottom: '32px' }}>
                 <h3 style={{ fontSize: '14px', fontWeight: '600', color: 'var(--color-ink)', margin: '0 0 16px 0' }}>Match Breakdown</h3>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '24px' }}>
-                  <MetricBar label="AI Similarity" score={r.textScore} />
+                  <MetricBar label="CV Similarity" score={r.textScore} />
                   <MetricBar label="Skills" score={r.skillsScore} />
                   <MetricBar label="Education" score={r.eduScore} />
                   <MetricBar label="Location" score={r.locScore} />
