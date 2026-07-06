@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { apiFetch } from '@/lib/api';
 
 const links = [
-  { href: '/dashboard/organization', label: 'Home & Analytics' },
+  { href: '/dashboard/organization', label: 'Home' },
   { href: '/dashboard/organization/create', label: 'Create opportunity' },
   { href: '/dashboard/organization/opportunities', label: 'My opportunities' },
   { href: '/dashboard/organization/profile', label: 'Profile' },

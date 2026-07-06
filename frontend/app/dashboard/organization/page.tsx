@@ -57,7 +57,7 @@ export default function OrganizationHome() {
     <div style={{ display: 'flex', flexDirection: 'column', gap: '32px', paddingBottom: '40px' }}>
       {/* Welcome Section */}
       <div>
-        <h1 style={{ fontFamily: 'var(--font-disp)', fontSize: '32px', fontWeight: '700', color: 'var(--color-ink)', marginBottom: '8px', letterSpacing: '-0.02em' }}>
+        <h1 style={{ fontSize: '28px', fontWeight: '700', color: 'var(--color-ink)', margin: '0 0 8px 0' }}>
           {profile?.name || 'Overview Analytics'}
         </h1>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
@@ -94,7 +94,7 @@ export default function OrganizationHome() {
       <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '32px' }}>
         {/* Line Chart */}
         <div style={{ backgroundColor: '#ffffff', border: '1px solid var(--color-line)', borderRadius: '16px', padding: '24px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.02)' }}>
-          <h2 style={{ fontFamily: 'var(--font-disp)', fontSize: '18px', fontWeight: '700', marginBottom: '24px', color: 'var(--color-ink)' }}>Application Velocity (6 Months)</h2>
+          <h2 style={{ fontFamily: 'var(--font-disp)', fontSize: '18px', fontWeight: '700', marginBottom: '24px', color: 'var(--color-ink)' }}>Applications over 6 Months</h2>
           {monthlyAppData.length === 0 ? <Empty /> : (
             <ResponsiveContainer width="100%" height={300}>
               <LineChart data={monthlyAppData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
@@ -112,7 +112,7 @@ export default function OrganizationHome() {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '32px' }}>
           {/* Bar Chart */}
           <div style={{ backgroundColor: '#ffffff', border: '1px solid var(--color-line)', borderRadius: '16px', padding: '24px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.02)' }}>
-            <h2 style={{ fontFamily: 'var(--font-disp)', fontSize: '18px', fontWeight: '700', marginBottom: '24px', color: 'var(--color-ink)' }}>Top Opportunities by Volume</h2>
+            <h2 style={{ fontFamily: 'var(--font-disp)', fontSize: '18px', fontWeight: '700', marginBottom: '24px', color: 'var(--color-ink)' }}>Total Opportunities </h2>
             {topOppsData.length === 0 ? <Empty /> : (
               <ResponsiveContainer width="100%" height={260}>
                 <BarChart data={topOppsData} layout="vertical" margin={{ top: 0, right: 20, left: 0, bottom: 0 }}>

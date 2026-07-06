@@ -55,7 +55,7 @@ export default function CompareApplicants() {
       <button onClick={() => router.back()} style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontSize: '14px', fontWeight: '600', color: 'var(--color-muted)', marginBottom: '24px' }}>
         &larr; Back to applicants
       </button>
-      <h1 style={{ fontFamily: 'var(--font-disp)', fontSize: '28px', fontWeight: '700', color: 'var(--color-ink)', marginBottom: '8px' }}>Compare applicants</h1>
+      <h1 style={{ fontSize: '28px', fontWeight: '700', color: 'var(--color-ink)', margin: '0 0 8px 0' }}>Compare applicants</h1>
       <p style={{ fontSize: '14px', color: 'var(--color-muted)', fontWeight: '500', marginBottom: '32px' }}>Select up to 4 applicants to compare side by side.</p>
 
       {error && <div style={{ padding: '16px', backgroundColor: 'rgba(220,38,38,0.05)', borderRadius: '12px', border: '1px solid rgba(220,38,38,0.2)', color: '#dc2626', fontWeight: '600', marginBottom: '24px' }}>{error}</div>}

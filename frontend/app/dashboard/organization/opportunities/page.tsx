@@ -45,7 +45,7 @@ export default function MyOpportunities() {
   return (
     <div style={{ maxWidth: '1000px', margin: '0 auto' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
-        <h1 style={{ fontFamily: 'var(--font-disp)', fontSize: '28px', fontWeight: '700', color: 'var(--color-ink)' }}>My opportunities</h1>
+        <h1 style={{ fontSize: '28px', fontWeight: '700', color: 'var(--color-ink)', margin: '0 0 8px 0' }}>My opportunities</h1>
         <Link href="/dashboard/organization/create" style={{ backgroundColor: '#1e3a8a', color: '#ffffff', padding: '10px 20px', borderRadius: '10px', fontSize: '14px', fontWeight: '600', textDecoration: 'none', boxShadow: '0 4px 6px -1px rgba(30, 58, 138, 0.2)' }}>
           + New opportunity
         </Link>

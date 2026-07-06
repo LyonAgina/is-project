@@ -36,7 +36,7 @@ export default function CreateOpportunity() {
 
   return (
     <div style={{ maxWidth: '800px', margin: '0 auto', paddingBottom: '40px' }}>
-      <h1 style={{ fontFamily: 'var(--font-disp)', fontSize: '28px', fontWeight: '700', marginBottom: '24px', color: 'var(--color-ink)' }}>Create an opportunity</h1>
+      <h1 style={{ fontSize: '28px', fontWeight: '700', color: 'var(--color-ink)', margin: '0 0 8px 0' }}>Create an opportunity</h1>
       
       <div style={{ backgroundColor: '#ffffff', border: '1px solid var(--color-line)', borderRadius: '16px', padding: '32px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.02)' }}>
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>

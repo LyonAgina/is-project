@@ -204,7 +204,7 @@ export default function Applicants() {
           marginBottom: '32px'
         }}
 >
-        <h1 style={{ fontFamily: 'var(--font-disp)', fontSize: '28px', fontWeight: '700', color: 'var(--color-ink)' }}>Applicants</h1>
+        <h1 style={{ fontSize: '28px', fontWeight: '700', color: 'var(--color-ink)', margin: '0 0 8px 0' }}>Applicants</h1>
         <div
   style={{
     display: 'flex',
