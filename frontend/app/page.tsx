@@ -47,10 +47,10 @@ export default function Home() {
       {/* Hero Content Section */}
       <section style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '64px', maxWidth: '1140px', margin: '0 auto', padding: '80px 24px', alignItems: 'center' }}>
         <div>
-          <h1 style={{ fontFamily: 'var(--font-disp), sans-serif', fontSize: '52px', fontWeight: '700', lineHeight: '1.1', letterSpacing: '-0.03em', marginBottom: '24px' }}>
+          <h1 style={{ fontSize: '28px', fontWeight: '700', color: 'var(--color-ink)', margin: '0 0 8px 0' }}>
             Match score, <br />not guesswork.
           </h1>
-          <p style={{ fontSize: '17px', color: 'var(--color-muted)', lineHeight: '1.6', marginBottom: '36px', maxWidth: '460px', fontWeight: '500' }}>
+          <p style={{ margin: 0, color: 'var(--color-muted)' }}>
             It reads your skills, education and interests, then ranks every job, internship and scholarship by how well it actually fits you. No more scrolling through listings meant for someone else.
           </p>
           <div style={{ display: 'flex', gap: '16px' }}>

@@ -5,6 +5,8 @@ import { useParams, useRouter } from 'next/navigation';
 import { apiFetch } from '@/lib/api';
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import * as XLSX from "xlsx";
+import ReportModal from "@/components/ReportModal";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
@@ -25,6 +27,7 @@ export default function Applicants() {
   const [error, setError] = useState('');
   const [modal, setModal] = useState(null);
   const [notifMsg, setNotifMsg] = useState('');
+  const [reportOpen, setReportOpen] = useState(false);
 
   useEffect(() => { load(); }, [id]);
 
@@ -188,6 +191,41 @@ export default function Applicants() {
   doc.save(`Applicants_Report_${timestamp}.pdf`);
 };
 
+const downloadApplicantsExcel = () => {
+  const rows = applicants.map((a) => ({
+    Applicant: a.full_name,
+    Email: a.email,
+    Education: a.education_level || "N/A",
+    Grade: GRADE_LABEL[a.academic_grade] || "N/A",
+    Experience: a.experience_years
+      ? `${a.experience_years} yrs`
+      : "N/A",
+    Location: a.location || "N/A",
+    Status: STATUS_LABELS[a.status],
+    "Match Score": a.total_score
+      ? `${Math.round(a.total_score)}%`
+      : "N/A",
+  }));
+
+  const worksheet = XLSX.utils.json_to_sheet(rows);
+  const workbook = XLSX.utils.book_new();
+
+  XLSX.utils.book_append_sheet(
+    workbook,
+    worksheet,
+    "Applicants"
+  );
+
+  const timestamp = new Date()
+    .toISOString()
+    .replace(/[:.]/g, "-");
+
+  XLSX.writeFile(
+    workbook,
+    `Applicants_Report_${timestamp}.xlsx`
+  );
+};
+
   return (
     <div style={{ maxWidth: '1000px', margin: '0 auto' }}>
       <button onClick={() => router.back()} style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontSize: '14px', fontWeight: '600', color: 'var(--color-muted)', marginBottom: '24px' }}>
@@ -227,7 +265,7 @@ export default function Applicants() {
 
   {applicants.length > 0 && (
     <button
-      onClick={downloadApplicantsReport}
+      onClick={() => setReportOpen(true)}
       style={{
         display: 'flex',
         alignItems: 'center',
@@ -261,6 +299,14 @@ export default function Applicants() {
       Download Report
     </button>
   )}
+
+          <ReportModal
+            open={reportOpen}
+            onClose={() => setReportOpen(false)}
+            onPDF={downloadApplicantsReport}
+            onExcel={downloadApplicantsExcel}
+            title="Generate Applicants Report"
+          />
 </div>
       </div>
 

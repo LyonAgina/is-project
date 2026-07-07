@@ -4,10 +4,14 @@ import { useEffect, useState } from 'react';
 import { apiFetch } from '@/lib/api';
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import * as XLSX from "xlsx";
+import ReportModal from "@/components/ReportModal";
+
 
 export default function AdminOpportunities() {
   const [opps, setOpps] = useState([]);
   const [error, setError] = useState('');
+  const [reportOpen, setReportOpen] = useState(false);
 
   useEffect(() => { load(); }, []);
 
@@ -192,6 +196,38 @@ export default function AdminOpportunities() {
   doc.save(`Global_Opportunities_Report_${timestamp}.pdf`);
 };
 
+const downloadExcel = () => {
+  const rows = opps.map((o) => ({
+    Title: o.title,
+    Organization: o.organization_name,
+    Category: o.category,
+    Status: o.status,
+    Deadline: o.deadline
+      ? new Date(o.deadline).toLocaleDateString()
+      : "N/A",
+    Expired: isExpired(o.deadline) ? "Yes" : "No",
+  }));
+
+  const worksheet = XLSX.utils.json_to_sheet(rows);
+
+  const workbook = XLSX.utils.book_new();
+
+  XLSX.utils.book_append_sheet(
+    workbook,
+    worksheet,
+    "Global Opportunities"
+  );
+
+  const timestamp = new Date()
+    .toISOString()
+    .replace(/[:.]/g, "-");
+
+  XLSX.writeFile(
+    workbook,
+    `Global_Opportunities_Report_${timestamp}.xlsx`
+  );
+};
+
   const isExpired = (deadline) => deadline && new Date(deadline) < new Date();
 
   return (
@@ -211,7 +247,7 @@ export default function AdminOpportunities() {
 
   {opps.length > 0 && (
     <button
-      onClick={downloadReport}
+      onClick={() => setReportOpen(true)}
       style={{
         display: 'flex',
         alignItems: 'center',
@@ -246,6 +282,14 @@ export default function AdminOpportunities() {
       Download Report
     </button>
   )}
+
+  <ReportModal
+  open={reportOpen}
+  onClose={() => setReportOpen(false)}
+  onPDF={downloadReport}
+  onExcel={downloadExcel}
+  title="Generate Opportunities Report"
+/>
 
   </div>
 

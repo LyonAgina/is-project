@@ -4,6 +4,9 @@ import { useEffect, useState, useMemo } from 'react';
 import { apiFetch } from '@/lib/api';
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import ReportModal from '@/components/ReportModal';
+import * as XLSX from "xlsx";
+
 
 export default function AdminUsers() {
   const [users, setUsers] = useState([]);
@@ -16,6 +19,7 @@ export default function AdminUsers() {
   const [notifyError, setNotifyError] = useState('');
   const [notifySuccess, setNotifySuccess] = useState('');
   const [actionLoading, setActionLoading] = useState(null);
+  const [reportOpen, setReportOpen] = useState(false);
 
   useEffect(() => { load(); }, []);
 
@@ -222,6 +226,46 @@ export default function AdminUsers() {
   doc.save(`Users_Report_${timestamp}.pdf`);
 };
 
+const downloadExcelReport = () => {
+  const headers = [
+    "Email",
+    "Role",
+    "Status",
+    "Joined Date",
+  ];
+
+  const rows = users.map((u) => [
+    `"${u.email}"`,
+    u.role,
+    u.is_active ? "Active" : "Inactive",
+    new Date(u.created_at).toLocaleDateString(),
+  ]);
+
+  const csv = [
+    headers.join(","),
+    ...rows.map((r) => r.join(","))
+  ].join("\n");
+
+  const blob = new Blob([csv], {
+    type: "text/csv;charset=utf-8;",
+  });
+
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+
+  const timestamp = new Date()
+    .toISOString()
+    .replace(/[:.]/g, "-");
+
+  link.download = `Users_Report_${timestamp}.csv`;
+
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+
+  URL.revokeObjectURL(link.href);
+};
+
   return (
     <div style={{ fontFamily: 'var(--font-body-text), sans-serif' }}>
       <div
@@ -245,7 +289,7 @@ export default function AdminUsers() {
 
   {users.length > 0 && (
     <button
-      onClick={downloadReport}
+      onClick={() => setReportOpen(true)}
       style={{
         display: 'flex',
         alignItems: 'center',
@@ -279,7 +323,49 @@ export default function AdminUsers() {
 
       Download Report
     </button>
-  )}
+    )}
+    <ReportModal
+  open={reportOpen}
+  onClose={() => setReportOpen(false)}
+  title="Generate Users Report"
+  onPDF={downloadReport}
+  onExcel={() => {
+    const headers = [
+      "Email",
+      "Role",
+      "Status",
+      "Joined Date"
+    ];
+
+    const rows = users.map((u) => [
+      `"${u.email}"`,
+      u.role,
+      u.is_active ? "Active" : "Inactive",
+      new Date(u.created_at).toLocaleDateString(),
+    ]);
+
+    const csv = [
+      headers.join(","),
+      ...rows.map(r => r.join(","))
+    ].join("\n");
+
+    const blob = new Blob([csv], {
+      type: "text/csv;charset=utf-8;",
+    });
+
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+
+    const timestamp = new Date()
+      .toISOString()
+      .replace(/[:.]/g, "-");
+
+    link.download = `Users_Report_${timestamp}.csv`;
+    link.click();
+
+    URL.revokeObjectURL(link.href);
+  }}
+/>
 </div>
 
       {error && <p style={{ color: '#dc2626', fontWeight: '600', padding: '16px', backgroundColor: 'rgba(220,38,38,0.05)', borderRadius: '12px', marginBottom: '24px' }}>{error}</p>}

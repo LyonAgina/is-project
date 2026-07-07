@@ -49,13 +49,7 @@ export default function OrganizationLayout({ children }) {
         
         {/* Logo Section */}
         <div style={{ padding: '0 16px', marginBottom: '40px' }}>
-          <span style={{
-            fontFamily: 'var(--font-disp), sans-serif',
-            fontSize: '18px',
-            fontWeight: '700',
-            color: 'var(--color-ink)',
-            letterSpacing: '-0.01em'
-          }}>
+          <span style={{ fontSize: '18px', fontWeight: '700', letterSpacing: '-0.01em', color: 'var(--color-ink)' }}>
             Opportunity Hub
           </span>
         </div>

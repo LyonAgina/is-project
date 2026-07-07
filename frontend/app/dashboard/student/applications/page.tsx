@@ -4,6 +4,9 @@ import { useEffect, useState, useMemo } from 'react';
 import { apiFetch } from '@/lib/api';
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import ReportModal from "@/components/ReportModal";
+import * as XLSX from "xlsx";
+
 
 // Upgraded to our premium structural colors
 const STATUS_COLORS = {
@@ -59,6 +62,7 @@ export default function StudentApplications() {
   const [error, setError] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [search, setSearch] = useState('');
+  const [reportOpen, setReportOpen] = useState(false);
 
   useEffect(() => {
     load();
@@ -96,7 +100,7 @@ export default function StudentApplications() {
     }, {} as Record<string, number>);
   }, [apps]);
 
-const downloadReport = () => {
+const downloadPDF = () => {
   const doc = new jsPDF({
     orientation: "landscape",
     unit: "mm",
@@ -239,6 +243,40 @@ const downloadReport = () => {
   doc.save(`Application_History_Report_${timestamp}.pdf`);
 };
 
+const downloadExcel = () => {
+  const data = apps.map((a) => ({
+    Opportunity: a.title,
+    Organization: a.organization_name,
+    Category: a.category,
+    Status: (a.status || "").replace("_", " "),
+    Applied: new Date(a.applied_at).toLocaleDateString(),
+    Deadline: a.deadline
+      ? new Date(a.deadline).toLocaleDateString()
+      : "N/A",
+  }));
+
+  const worksheet = XLSX.utils.json_to_sheet(data);
+
+  const workbook = XLSX.utils.book_new();
+
+  XLSX.utils.book_append_sheet(
+    workbook,
+    worksheet,
+    "Applications"
+  );
+
+  const timestamp = new Date()
+    .toISOString()
+    .replace(/[:.]/g, "-")
+    .replace("T", "_")
+    .replace("Z", "");
+
+  XLSX.writeFile(
+    workbook,
+    `Application_History_Report_${timestamp}.xlsx`
+  );
+};
+
   return (
     <div style={{ maxWidth: '900px' }}>
 
@@ -260,7 +298,7 @@ const downloadReport = () => {
           </div>
           {apps.length > 0 && (
             <button
-              onClick={downloadReport}
+              onClick={() => setReportOpen(true)}
               className="no-print"
               style={{
                 display: 'flex', alignItems: 'center', gap: '8px',
@@ -277,6 +315,14 @@ const downloadReport = () => {
               Download report
             </button>
           )}
+
+          <ReportModal
+            open={reportOpen}
+            onClose={() => setReportOpen(false)}
+            onPDF={downloadPDF}
+            onExcel={downloadExcel}
+            title="Generate Application Report"
+          />
         </div>
 
         {/* Interactive Summary Stats (Acts as filters) */}

@@ -88,7 +88,7 @@ export default function Register() {
   };
 
   return (
-    <AuthLayout title="Register" subtitle="Create your profile access container">
+    <AuthLayout title="Register" subtitle="Create your profile">
       <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
         <div>
           <label style={labelStyle}>Account Type</label>
