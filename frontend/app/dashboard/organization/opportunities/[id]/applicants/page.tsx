@@ -340,7 +340,7 @@ const downloadApplicantsExcel = () => {
                 </div>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px', padding: '20px 0', borderTop: '1px solid var(--color-line)', borderBottom: '1px solid var(--color-line)', marginBottom: '20px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px', padding: '20px 0', borderTop: '1px solid var(--color-line)', borderBottom: '1px solid var(--color-line)', marginBottom: '20px' }} className="stats-grid">
                 {[{l: 'Education', v: a.education_level || 'Not set'}, {l: 'Grade', v: GRADE_LABEL[a.academic_grade] || 'Not set'}, {l: 'Experience', v: a.experience_years != null ? a.experience_years + ' yrs' : 'Not set'}, {l: 'Location', v: a.location || 'Not set'}].map(stat => (
                   <div key={stat.l} style={{ backgroundColor: 'var(--color-paper)', padding: '12px', borderRadius: '10px', border: '1px solid var(--color-line)' }}>
                     <span style={{ display: 'block', fontSize: '10px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--color-muted)', marginBottom: '4px' }}>{stat.l}</span>

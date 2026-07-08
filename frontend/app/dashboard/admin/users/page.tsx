@@ -390,8 +390,8 @@ const downloadExcelReport = () => {
       <p style={{ fontSize: '13px', color: 'var(--color-muted)', fontWeight: '600', marginBottom: '16px' }}>Showing {filtered.length} user(s)</p>
 
       {/* Main Table */}
-      <div style={{ backgroundColor: '#ffffff', borderRadius: '16px', border: '1px solid var(--color-line)', overflow: 'hidden', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.02)' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+      <div style={{ backgroundColor: '#ffffff', borderRadius: '16px', border: '1px solid var(--color-line)', overflow: 'hidden', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.02)' }} className="table-scroll">
+        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '600px' }}>
           <thead style={{ backgroundColor: 'var(--color-paper)', borderBottom: '1px solid var(--color-line)' }}>
             <tr>
               {['Email Address', 'Role', 'Status', 'Joined Date', 'Actions'].map(h => (

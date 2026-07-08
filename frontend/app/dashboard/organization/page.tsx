@@ -74,7 +74,7 @@ export default function OrganizationHome() {
       </div>
 
       {/* Summary KPI Cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '24px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '24px' }} className="stats-grid">
         {[
           { label: 'Opportunities posted', value: totalOpps, dot: '#1e3a8a' },
           { label: 'Active opportunities', value: activeOpps ? Number(activeOpps.count) : 0, dot: '#10b981' },
@@ -109,7 +109,7 @@ export default function OrganizationHome() {
         </div>
 
         {/* Bar & Pie Row */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '32px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '32px' }} className="responsive-grid-2 chart-row">
           {/* Bar Chart */}
           <div style={{ backgroundColor: '#ffffff', border: '1px solid var(--color-line)', borderRadius: '16px', padding: '24px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.02)' }}>
             <h2 style={{ fontFamily: 'var(--font-disp)', fontSize: '18px', fontWeight: '700', marginBottom: '24px', color: 'var(--color-ink)' }}>Total Opportunities </h2>

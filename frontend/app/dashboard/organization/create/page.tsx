@@ -46,7 +46,7 @@ export default function CreateOpportunity() {
             <input name="title" value={form.title} onChange={handleChange} placeholder="e.g. Software Engineering Graduate Trainee" style={inputStyle} required />
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }} className="responsive-grid-2">
             <div>
               <label style={labelStyle}>Category</label>
               <select name="category" value={form.category} onChange={handleChange} style={{ ...inputStyle, cursor: 'pointer' }}>
@@ -66,7 +66,7 @@ export default function CreateOpportunity() {
             <textarea name="description" value={form.description} onChange={handleChange} placeholder="Describe the responsibilities and requirements..." style={{ ...inputStyle, minHeight: '140px', resize: 'vertical' }} required />
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', paddingTop: '16px', borderTop: '1px solid var(--color-line)' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', paddingTop: '16px', borderTop: '1px solid var(--color-line)' }} className="responsive-grid-2">
             <div>
               <label style={labelStyle}>Minimum Education</label>
               <select name="minEducation" value={form.minEducation} onChange={handleChange} style={inputStyle}>
@@ -88,7 +88,7 @@ export default function CreateOpportunity() {
             </div>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }} className="responsive-grid-2">
             <div>
               <label style={labelStyle}>Min Experience (Years)</label>
               <input name="minExperience" type="number" step="0.5" value={form.minExperience} onChange={handleChange} placeholder="e.g. 2" style={inputStyle} />

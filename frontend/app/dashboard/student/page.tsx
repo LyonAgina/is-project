@@ -54,7 +54,7 @@ export default function StudentHome() {
       <ProfileCompleteness profile={profile} tags={tags} />
 
       {/* Stats Cards - Forced Grid with explicit gaps */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '20px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '20px' }} className="stats-grid">
         {[
           { label: 'Applications', value: apps.length, href: '/dashboard/student/applications', dot: '#1e3a8a' }, // Navy
           { label: 'Under review', value: underReview, href: '/dashboard/student/applications', dot: '#3b82f6' }, // Sky Blue
@@ -83,7 +83,7 @@ export default function StudentHome() {
       </div>
 
       {/* Recent & New Opportunities Grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '24px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '24px' }} className="responsive-grid-2">
         
         {/* Recent Applications */}
         <div style={{ backgroundColor: '#ffffff', borderRadius: '16px', border: '1px solid var(--color-line)', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)', overflow: 'hidden' }}>

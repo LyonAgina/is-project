@@ -4,6 +4,25 @@ import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 
+function HamburgerIcon({ open }) {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      {open ? (
+        <>
+          <line x1="18" y1="6" x2="6" y2="18" />
+          <line x1="6" y1="6" x2="18" y2="18" />
+        </>
+      ) : (
+        <>
+          <line x1="3" y1="6" x2="21" y2="6" />
+          <line x1="3" y1="12" x2="21" y2="12" />
+          <line x1="3" y1="18" x2="21" y2="18" />
+        </>
+      )}
+    </svg>
+  );
+}
+
 const links = [
   { href: '/dashboard/admin', label: 'Home' },
   { href: '/dashboard/admin/organizations', label: 'Organizations' },
@@ -15,6 +34,7 @@ export default function AdminLayout({ children }) {
   const router = useRouter();
   const pathname = usePathname();
   const [ready, setReady] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
     const role = localStorage.getItem('role');
@@ -30,19 +50,30 @@ export default function AdminLayout({ children }) {
     router.push('/login');
   };
 
+  // Close sidebar when navigating
+  useEffect(() => {
+    setSidebarOpen(false);
+  }, [pathname]);
+
   if (!ready) return null;
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: 'var(--color-paper)', color: 'var(--color-ink)', fontFamily: 'var(--font-body-text), system-ui, sans-serif' }}>
       
+      {/* Mobile overlay */}
+      <div className={`mobile-overlay${sidebarOpen ? ' open' : ''}`} onClick={() => setSidebarOpen(false)} />
+
       {/* Sidebar */}
-      <aside style={{ width: '260px', backgroundColor: '#ffffff', borderRight: '1px solid var(--color-line)', padding: '24px', display: 'flex', flexDirection: 'column', position: 'fixed', top: 0, bottom: 0, left: 0, zIndex: 20 }}>
+      <aside className={`dashboard-sidebar${sidebarOpen ? ' open' : ''}`} style={{ width: '260px', backgroundColor: '#ffffff', borderRight: '1px solid var(--color-line)', padding: '24px', display: 'flex', flexDirection: 'column', position: 'fixed', top: 0, bottom: 0, left: 0, zIndex: 30 }}>
         
         {/* Logo Section */}
-        <div style={{ padding: '0 16px', marginBottom: '40px' }}>
+        <div style={{ padding: '0 16px', marginBottom: '40px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <span style={{ fontSize: '18px', fontWeight: '700', letterSpacing: '-0.01em', color: 'var(--color-ink)' }}>
             Opportunity Hub
           </span>
+          <button className="hamburger-btn" onClick={() => setSidebarOpen(false)} aria-label="Close menu" style={{ marginRight: '-8px' }}>
+            <HamburgerIcon open={true} />
+          </button>
         </div>
         
         {/* Navigation */}
@@ -72,14 +103,19 @@ export default function AdminLayout({ children }) {
       </aside>
 
       {/* Main Content Area */}
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', marginLeft: '260px', minWidth: 0 }}>
+      <div className="dashboard-content" style={{ flex: 1, display: 'flex', flexDirection: 'column', marginLeft: '260px', minWidth: 0 }}>
         
         {/* Sticky Header */}
-        <header style={{ 
+        <header className="dashboard-header" style={{ 
           position: 'sticky', top: 0, zIndex: 10, backgroundColor: 'rgba(243, 245, 247, 0.9)', 
           backdropFilter: 'blur(8px)', borderBottom: '1px solid var(--color-line)', 
           padding: '16px 32px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' 
         }}>
+          {/* Hamburger – visible on mobile only */}
+          <button className="hamburger-btn" onClick={() => setSidebarOpen(true)} aria-label="Open menu">
+            <HamburgerIcon open={false} />
+          </button>
+
           <div style={{ fontSize: '14px', fontWeight: '600', color: 'var(--color-muted)' }}>System Administrator</div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
             <div style={{ 
@@ -109,7 +145,7 @@ export default function AdminLayout({ children }) {
         </header>
 
         {/* Constrained Main Canvas */}
-        <main style={{ flex: 1, padding: '32px', overflowY: 'auto' }}>
+        <main className="dashboard-main" style={{ flex: 1, padding: '32px', overflowY: 'auto' }}>
           <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
             {children}
           </div>

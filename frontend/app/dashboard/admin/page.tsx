@@ -72,7 +72,7 @@ export default function AdminHome() {
       </div>
 
       {/* KPI Cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px' }} className="stats-grid">
         {topStats.map((c) => (
           <div key={c.label} style={{ backgroundColor: '#ffffff', borderRadius: '16px', padding: '24px', border: '1px solid var(--color-line)', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.02)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', height: '130px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -85,7 +85,7 @@ export default function AdminHome() {
       </div>
 
       {/* Main Trend Charts */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(450px, 1fr))', gap: '32px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(450px, 1fr))', gap: '32px' }} className="responsive-grid-2 chart-row">
         
         {/* Registrations Bar Chart */}
         <div style={{ backgroundColor: '#ffffff', border: '1px solid var(--color-line)', borderRadius: '16px', padding: '24px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.02)' }}>
@@ -123,7 +123,7 @@ export default function AdminHome() {
       </div>
 
       {/* Breakdowns Row (Pie Charts) */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '24px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '24px' }} className="responsive-grid-2">
         <ChartCard title="Opportunity Categories">
           {oppCategoryData.length === 0 ? <Empty /> : (
             <ResponsiveContainer width="100%" height={220}>

@@ -31,7 +31,7 @@ export default function AdminOrganizations() {
 
   return (
     <div style={{ maxWidth: '1000px', margin: '0 auto', fontFamily: 'var(--font-body-text), sans-serif' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px', flexWrap: 'wrap', gap: '16px' }}>
         <h1 style={{ fontSize: '28px', fontWeight: '700', color: 'var(--color-ink)', margin: '0 0 8px 0' }}>Pending Organizations</h1>
         <span style={{ backgroundColor: '#f59e0b', color: '#ffffff', fontSize: '12px', fontWeight: '700', padding: '6px 12px', borderRadius: '8px' }}>{orgs.length} Pending</span>
       </div>

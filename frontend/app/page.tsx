@@ -34,7 +34,7 @@ export default function Home() {
     <div style={{ minHeight: '100vh', backgroundColor: 'var(--color-paper)', color: 'var(--color-ink)', fontFamily: 'var(--font-body-text), system-ui, sans-serif' }}>
       
       {/* Top Header Navbar */}
-      <header style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 48px', backgroundColor: '#ffffff', borderBottom: '1px solid var(--color-line)', position: 'sticky', top: 0, zIndex: 40 }}>
+      <header className="landing-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 48px', backgroundColor: '#ffffff', borderBottom: '1px solid var(--color-line)', position: 'sticky', top: 0, zIndex: 40 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           <span style={{ fontSize: '18px', fontWeight: '700', letterSpacing: '-0.01em', color: 'var(--color-ink)' }}>Opportunity Hub</span>
         </div>
@@ -45,7 +45,7 @@ export default function Home() {
       </header>
 
       {/* Hero Content Section */}
-      <section style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '64px', maxWidth: '1140px', margin: '0 auto', padding: '80px 24px', alignItems: 'center' }}>
+      <section className="hero-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '64px', maxWidth: '1140px', margin: '0 auto', padding: '80px 24px', alignItems: 'center' }}>
         <div>
           <h1 style={{ fontSize: '28px', fontWeight: '700', color: 'var(--color-ink)', margin: '0 0 8px 0' }}>
             Match score, <br />not guesswork.
@@ -102,10 +102,10 @@ export default function Home() {
       </section>
 
       {/* Grid Process Blocks */}
-      <section style={{ backgroundColor: '#ffffff', borderTop: '1px solid var(--color-line)', padding: '80px 48px' }}>
+      <section className="how-it-works-section" style={{ backgroundColor: '#ffffff', borderTop: '1px solid var(--color-line)', padding: '80px 48px' }}>
         <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
           <h2 style={{ fontFamily: 'var(--font-disp), sans-serif', fontSize: '26px', fontWeight: '700', marginBottom: '40px', letterSpacing: '-0.01em' }}>How it works</h2>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '32px' }}>
+          <div className="responsive-grid-2" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '32px' }}>
             {[
               { n: '01', title: 'Build your profile', text: 'Add your education, skills, interests and location — once.' },
               { n: '02', title: 'Get scored against every listing', text: 'It weighs skills, education, location, experience and interests for each opportunity live on the platform.' },
@@ -123,7 +123,7 @@ export default function Home() {
 
       {/* Target Audiences Panels */}
       <section style={{ maxWidth: '1100px', margin: '0 auto', padding: '80px 24px' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '24px' }}>
+        <div className="responsive-grid-2" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '24px' }}>
           <div style={{ border: '1px solid var(--color-line)', backgroundColor: '#ffffff', padding: '28px', borderRadius: '16px' }}>
             <h3 style={{ fontSize: '16px', fontWeight: '700', marginBottom: '8px' }}>Students</h3>
             <p style={{ fontSize: '13.5px', color: 'var(--color-muted)', lineHeight: '1.5', fontWeight: '500' }}>One profile, ranked recommendations across jobs, internships and scholarships.</p>

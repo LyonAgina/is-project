@@ -83,6 +83,7 @@ export default function CompareApplicants() {
       {compared.length === 0 ? (
         <p style={{ color: 'var(--color-muted)', fontWeight: '500' }}>Select at least one applicant above to compare.</p>
       ) : (
+        <div className="table-scroll" style={{ overflowX: 'auto' }}>
         <div style={{ display: 'grid', gap: '24px', gridTemplateColumns: `repeat(${compared.length}, minmax(260px, 1fr))` }}>
           {compared.map((a) => {
             const initials = (a.full_name || '?').split(' ').map((p) => p[0]).slice(0, 2).join('').toUpperCase();
@@ -121,6 +122,7 @@ export default function CompareApplicants() {
               </div>
             );
           })}
+        </div>
         </div>
       )}
     </div>

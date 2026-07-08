@@ -327,7 +327,7 @@ const downloadExcel = () => {
 
         {/* Interactive Summary Stats (Acts as filters) */}
         {apps.length > 0 && (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px', marginBottom: '32px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px', marginBottom: '32px' }} className="stats-grid">
             {(['submitted', 'under_review', 'accepted', 'rejected'] as const).map((s) => {
               const active = statusFilter === s;
               const c = STATUS_COLORS[s];
@@ -474,4 +474,4 @@ const downloadExcel = () => {
       </div>
     </div>
   );
-}
+} n

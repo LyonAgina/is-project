@@ -146,7 +146,7 @@ export default function OpportunityDetail() {
         </div>
 
         {(skills.length > 0 || interests.length > 0) && (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '24px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '24px' }} className="responsive-grid-2">
             {skills.length > 0 && (
               <div>
                 <h2 style={{ fontSize: '16px', fontWeight: '700', color: 'var(--color-ink)', marginBottom: '12px' }}>Required Skills</h2>
